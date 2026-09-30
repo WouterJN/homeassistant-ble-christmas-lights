@@ -3,7 +3,7 @@
   "name": "BLE Christmas Lights",
   "bluetooth": [
     {
-      "local_name": "LED-4-*",
+      "local_name": "LED-*",
       "connectable": true
     }
   ],
@@ -15,5 +15,5 @@
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/WouterJN/homeassistant-ble-christmas-lights/issues",
   "requirements": [],
-  "version": "0.1.0"
+  "version": "0.2.0"
 }

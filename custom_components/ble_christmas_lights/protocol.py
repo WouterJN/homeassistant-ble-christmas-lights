@@ -44,7 +44,7 @@ CMD_QUERY_SETTINGS = bytes.fromhex("020000")
 _POWER_REPORT_LENGTH = 5
 _POWER_REPORT_MARKER = b"\x00\x00\x02"
 _SETTINGS_REPORT_LENGTH = 18
-_SETTINGS_REPORT_MARKER = bytes(8)
+_SETTINGS_REPORT_PREFIX = b"\x02\x00"
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,7 +56,12 @@ class PowerReport:
 
 @dataclass(frozen=True, slots=True)
 class SettingsReport:
-    """Reply to CMD_QUERY_SETTINGS."""
+    """Reply to CMD_QUERY_SETTINGS.
+
+    Layout of the 18 bytes: 0-2 unknown (starts with 02 00), 3 brightness,
+    4-15 three timers of start hour/minute and stop hour/minute (all zero when
+    unset), 16 unknown, 17 mode.
+    """
 
     brightness: int
     mode: Mode
@@ -83,7 +88,9 @@ def parse_notification(data: bytes) -> PowerReport | SettingsReport | None:
     """Decode a notification, or return None when it is not recognised."""
     if len(data) == _POWER_REPORT_LENGTH and _POWER_REPORT_MARKER in data:
         return PowerReport(is_on=data[3] == 0x01)
-    if len(data) == _SETTINGS_REPORT_LENGTH and _SETTINGS_REPORT_MARKER in data:
+    if len(data) == _SETTINGS_REPORT_LENGTH and data.startswith(
+        _SETTINGS_REPORT_PREFIX
+    ):
         # The controller reports "no modes" when it is cycling through all of them.
         mode = Mode(data[-1] & ALL_MODES) or ALL_MODES
         return SettingsReport(brightness=data[3], mode=mode)

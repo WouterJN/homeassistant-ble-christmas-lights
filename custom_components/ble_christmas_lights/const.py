@@ -1,13 +1,14 @@
 """Constants for the BLE Christmas Lights integration."""
 
 from datetime import timedelta
+import re
 
 from .protocol import ALL_MODES, Mode
 
 DOMAIN = "ble_christmas_lights"
 
 # Bluetooth names the controllers advertise with, e.g. "LED-4-02-00000000".
-SUPPORTED_NAME_PREFIXES = ("LED-4-01-", "LED-4-02-")
+SUPPORTED_NAME = re.compile(r"LED-\d-\d\d-00000000")
 
 # Also reconnects after the controller went out of range.
 UPDATE_INTERVAL = timedelta(seconds=30)

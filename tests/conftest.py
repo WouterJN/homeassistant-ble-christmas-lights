@@ -24,7 +24,13 @@ POWER_OFF_REPORT = bytes.fromhex("0000020000")
 
 def settings_report(brightness: int, mode: int) -> bytes:
     """Build an 18-byte settings reply as the controller sends it."""
-    return bytes((0x00, 0x00, 0x01, brightness)) + bytes(13) + bytes((mode,))
+    return (
+        bytes.fromhex("02000f")
+        + bytes((brightness,))
+        + bytes(12)  # three unset timers
+        + bytes.fromhex("03")
+        + bytes((mode,))
+    )
 
 
 @pytest.fixture(autouse=True)

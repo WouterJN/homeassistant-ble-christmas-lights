@@ -84,7 +84,13 @@ def test_parse_settings_report_ignores_high_bit():
     assert parse_notification(settings_report(99, 0xC0)).mode == Mode.STAY_ON
 
 
-@pytest.mark.parametrize("data", ["", "0102", "000002010000", "ff" * 18])
+def test_parse_settings_report_with_timers():
+    # Captured from a controller with two timers set (16:00-23:00, 06:15-07:59).
+    data = bytes.fromhex("02000f6310001700060f073b000000000340")
+    assert parse_notification(data) == SettingsReport(brightness=99, mode=Mode.STAY_ON)
+
+
+@pytest.mark.parametrize("data", ["", "0102", "000002010000", "ff" * 18, "00" * 18])
 def test_parse_unknown(data):
     assert parse_notification(bytes.fromhex(data)) is None
 

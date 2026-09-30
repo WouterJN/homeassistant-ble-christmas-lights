@@ -16,7 +16,8 @@ over Bluetooth.
 ## Supported lights
 
 Lights that show up in the Lights App and advertise over Bluetooth as
-`LED-4-01-…` or `LED-4-02-…`, such as the 5.5 m and 48 m versions.
+names like `LED-4-01-00000000` or `LED-4-02-00000000` (the pattern
+`LED-<digit>-<two digits>-00000000`), such as the 5.5 m and 48 m versions.
 
 Do your lights advertise with another name? Please
 [open an issue](https://github.com/WouterJN/homeassistant-ble-christmas-lights/issues)
@@ -107,7 +108,7 @@ dependencies.
 ## Credits
 
 The Bluetooth protocol was first worked out by
-[Juraj Nyíri](https://github.com/JurajNyiri) in
+[Juraj Nyíri](https://github.com/JurajNyiri) and contributors in
 [HomeAssistant-Lights-App](https://github.com/JurajNyiri/HomeAssistant-Lights-App).
 This project is a new implementation, written from scratch.
 

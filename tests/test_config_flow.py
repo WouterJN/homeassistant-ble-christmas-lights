@@ -52,11 +52,22 @@ async def test_bluetooth_discovery(hass: HomeAssistant, controller):
     assert result["result"].unique_id == ADDRESS
 
 
-async def test_bluetooth_discovery_unsupported_name(hass: HomeAssistant):
+@pytest.mark.parametrize("name", ["LED-3-05-00000000", "LED-4-02-00000000"])
+async def test_bluetooth_discovery_supported_names(hass: HomeAssistant, name):
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_BLUETOOTH}, data=make_service_info(name=name)
+    )
+    assert result["step_id"] == "bluetooth_confirm"
+
+
+@pytest.mark.parametrize(
+    "name", ["LED-4-02-12345678", "LED-strip", "LED-44-02-00000000"]
+)
+async def test_bluetooth_discovery_unsupported_name(hass: HomeAssistant, name):
     result = await hass.config_entries.flow.async_init(
         DOMAIN,
         context={"source": SOURCE_BLUETOOTH},
-        data=make_service_info(name="LED-9-99-00000000"),
+        data=make_service_info(name=name),
     )
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "not_supported"

@@ -15,14 +15,14 @@ from homeassistant.components.bluetooth import (
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_ADDRESS
 
-from .const import DOMAIN, SUPPORTED_NAME_PREFIXES
+from .const import DOMAIN, SUPPORTED_NAME
 from .device import BLEAK_EXCEPTIONS, CharacteristicMissingError, ChristmasLights
 
 _LOGGER = logging.getLogger(__name__)
 
 
 def _is_supported(service_info: BluetoothServiceInfoBleak) -> bool:
-    return service_info.name.startswith(SUPPORTED_NAME_PREFIXES)
+    return SUPPORTED_NAME.fullmatch(service_info.name) is not None
 
 
 def _title(address: str) -> str:
