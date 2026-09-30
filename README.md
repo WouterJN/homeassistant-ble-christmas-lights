@@ -1,3 +1,5 @@
+<img src="custom_components/ble_christmas_lights/brand/icon@2x.png" alt="" width="128" align="right">
+
 # BLE Christmas Lights for Home Assistant
 
 [![Validate](https://github.com/WouterJN/homeassistant-ble-christmas-lights/actions/workflows/validate.yml/badge.svg)](https://github.com/WouterJN/homeassistant-ble-christmas-lights/actions/workflows/validate.yml)

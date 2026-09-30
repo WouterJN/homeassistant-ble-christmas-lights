@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow
 [Semantic Versioning](https://semver.org/lang/nl/): while the version starts
 with `0.`, any release may still contain breaking changes.
 
+## [0.2.1] - 2026-09-30
+
+- New icon: a light string wound around a Christmas tree.
+
 ## [0.2.0] - 2026-09-30
 
 - Support every controller whose Bluetooth name matches

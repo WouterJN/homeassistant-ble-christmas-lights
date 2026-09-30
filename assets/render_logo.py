@@ -6,13 +6,13 @@ top and a small Bluetooth rune in the corner.
 Drawn with Pillow at 4x and downsampled, so regenerating the artwork needs no
 SVG engine.
 
-    python assets/render_logo.py
+    python assets/render_logo.py  # needs macOS for the Helvetica font
 """
 
 import math
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 BACKGROUND_TOP = (14, 40, 30)
 BACKGROUND_BOTTOM = (8, 22, 18)
@@ -24,7 +24,9 @@ RUNE = (120, 170, 255)
 
 CANVAS = 2048
 TURNS = 5.5
-OUT = Path(__file__).parent.parent / "custom_components/ble_christmas_lights/brand"
+ASSETS = Path(__file__).parent
+OUT = ASSETS.parent / "custom_components/ble_christmas_lights/brand"
+FONT = "/System/Library/Fonts/Helvetica.ttc"
 
 
 def u(value: float) -> float:
@@ -116,8 +118,30 @@ def render() -> Image.Image:
     return image
 
 
+def social_preview(icon: Image.Image) -> Image.Image:
+    """The 1280x640 image GitHub shows when the repository is shared."""
+    preview = Image.new("RGBA", (1280, 640), (*BACKGROUND_BOTTOM, 255))
+    preview.alpha_composite(icon.resize((440, 440), Image.LANCZOS), (70, 100))
+    draw = ImageDraw.Draw(preview)
+    draw.text(
+        (570, 236),
+        "BLE Christmas Lights",
+        font=ImageFont.truetype(FONT, 58, index=1),
+        fill=STAR,
+    )
+    draw.text(
+        (572, 330),
+        "Home Assistant integration for\nBluetooth Christmas lights (Lights App)",
+        font=ImageFont.truetype(FONT, 34),
+        fill=(200, 215, 205),
+        spacing=12,
+    )
+    return preview
+
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     image = render()
     image.resize((256, 256), Image.LANCZOS).save(OUT / "icon.png")
     image.resize((512, 512), Image.LANCZOS).save(OUT / "icon@2x.png")
+    social_preview(image).convert("RGB").save(ASSETS / "social-preview.png")
