@@ -1,7 +1,7 @@
 """Rasterise the integration icon.
 
-Two strands of warm white Christmas lights hanging across a night-blue tile,
-with a small Bluetooth rune in the corner.
+A string of warm white lights wound around a Christmas tree, with a star on
+top and a small Bluetooth rune in the corner.
 
 Drawn with Pillow at 4x and downsampled, so regenerating the artwork needs no
 SVG engine.
@@ -14,13 +14,16 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFilter
 
-BACKGROUND = (22, 36, 71)
-WIRE = (46, 94, 58)
+BACKGROUND_TOP = (14, 40, 30)
+BACKGROUND_BOTTOM = (8, 22, 18)
+WIRE = (48, 104, 70)
 BULB = (255, 214, 130)
-GLOW = (255, 190, 90)
+GLOW = (255, 180, 80)
+STAR = (255, 225, 150)
 RUNE = (120, 170, 255)
 
 CANVAS = 2048
+TURNS = 5.5
 OUT = Path(__file__).parent.parent / "custom_components/ble_christmas_lights/brand"
 
 
@@ -29,42 +32,75 @@ def u(value: float) -> float:
     return value * CANVAS / 512
 
 
-def strand(y0: float, sag: float) -> list[tuple[float, float]]:
-    """Points along a hanging wire from left to right."""
-    return [
-        (u(x), u(y0 + sag * math.sin(math.pi * (x - 40) / 432)))
-        for x in range(40, 473, 4)
-    ]
+def background() -> Image.Image:
+    """A rounded tile with a dark green vertical gradient."""
+    gradient = Image.new("RGBA", (CANVAS, CANVAS))
+    draw = ImageDraw.Draw(gradient)
+    for y in range(CANVAS):
+        t = y / CANVAS
+        color = tuple(
+            int(a + (b - a) * t)
+            for a, b in zip(BACKGROUND_TOP, BACKGROUND_BOTTOM, strict=True)
+        )
+        draw.line([(0, y), (CANVAS, y)], fill=(*color, 255))
+    mask = Image.new("L", (CANVAS, CANVAS), 0)
+    ImageDraw.Draw(mask).rounded_rectangle(
+        [0, 0, CANVAS, CANVAS], radius=u(104), fill=255
+    )
+    image = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
+    image.paste(gradient, (0, 0), mask)
+    return image
+
+
+def glow(image: Image.Image, points, radius: float, alpha: int, blur: float) -> None:
+    """Add a soft halo around each point."""
+    layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+    for x, y in points:
+        draw.ellipse(
+            [x - radius, y - radius, x + radius, y + radius], fill=(*GLOW, alpha)
+        )
+    image.alpha_composite(layer.filter(ImageFilter.GaussianBlur(u(blur))))
 
 
 def render() -> Image.Image:
-    image = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
+    image = background()
     draw = ImageDraw.Draw(image)
-    draw.rounded_rectangle([0, 0, CANVAS, CANVAS], radius=u(104), fill=BACKGROUND)
 
-    strands = [strand(150, 90), strand(300, 90)]
-    bulbs = []
-    for points in strands:
-        draw.line(points, fill=WIRE, width=int(u(10)), joint="curve")
-        bulbs += points[10:-5:18]
+    # The light string spirals down the tree, widening towards the bottom.
+    top, bottom, centre = 84, 418, 248
+    wire = []
+    for i in range(1001):
+        t = i / 1000
+        angle = t * TURNS * 2 * math.pi
+        x = centre + (28 + 152 * t) * math.sin(angle)
+        wire.append((u(x), u(top + (bottom - top) * t), math.cos(angle)))
+    draw.line([(x, y) for x, y, _ in wire], fill=WIRE, width=int(u(7)), joint="curve")
 
-    glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
-    glow_draw = ImageDraw.Draw(glow)
+    # Bulbs on the front of the tree only, so the spiral reads as 3D.
+    bulbs = [
+        (x, y) for i, (x, y, depth) in enumerate(wire) if i % 22 == 0 and depth > -0.3
+    ]
+    glow(image, bulbs, u(22), alpha=170, blur=12)
+    draw = ImageDraw.Draw(image)
     for x, y in bulbs:
-        r = u(34)
-        glow_draw.ellipse(
-            [x - r, y + u(18) - r, x + r, y + u(18) + r], fill=(*GLOW, 150)
+        draw.ellipse([x - u(10), y - u(10), x + u(10), y + u(10)], fill=BULB)
+
+    # The star on top.
+    sx, sy, r = u(248), u(60), u(28)
+    star = [
+        (
+            sx + (r if k % 2 == 0 else r * 0.45) * math.sin(k * math.pi / 5),
+            sy - (r if k % 2 == 0 else r * 0.45) * math.cos(k * math.pi / 5),
         )
-    image.alpha_composite(glow.filter(ImageFilter.GaussianBlur(u(14))))
+        for k in range(10)
+    ]
+    glow(image, [(sx, sy)], u(36), alpha=190, blur=12)
+    ImageDraw.Draw(image).polygon(star, fill=STAR)
 
-    draw = ImageDraw.Draw(image)
-    for x, y in bulbs:
-        draw.rectangle([x - u(7), y - u(2), x + u(7), y + u(12)], fill=WIRE)
-        draw.ellipse([x - u(13), y + u(6), x + u(13), y + u(40)], fill=BULB)
-
-    # Bluetooth rune, bottom right
-    cx, cy, s = u(420), u(430), u(34)
-    draw.line(
+    # Bluetooth rune, bottom right.
+    cx, cy, s = u(452), u(450), u(30)
+    ImageDraw.Draw(image).line(
         [
             (cx - s * 0.6, cy - s * 0.45),
             (cx + s * 0.6, cy + s * 0.45),
@@ -74,7 +110,7 @@ def render() -> Image.Image:
             (cx - s * 0.6, cy + s * 0.45),
         ],
         fill=RUNE,
-        width=int(u(9)),
+        width=int(u(10)),
         joint="curve",
     )
     return image
