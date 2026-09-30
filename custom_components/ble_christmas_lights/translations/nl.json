@@ -1,0 +1,53 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "description": "Kies de kerstverlichting die je wilt toevoegen.",
+        "data": {
+          "address": "Apparaat"
+        }
+      },
+      "bluetooth_confirm": {
+        "description": "Wil je {name} toevoegen? Zorg dat de verlichting aan staat en dat de Lights App op je telefoon gesloten is."
+      }
+    },
+    "error": {
+      "cannot_connect": "Kan geen verbinding maken. Zorg dat de verlichting binnen bereik is en niet met je telefoon verbonden is.",
+      "unknown": "Onverwachte fout"
+    },
+    "abort": {
+      "already_configured": "Apparaat is al geconfigureerd",
+      "no_devices_found": "Geen kerstverlichting in de buurt gevonden",
+      "not_supported": "Dit apparaat wordt niet ondersteund"
+    }
+  },
+  "entity": {
+    "light": {
+      "christmas_lights": {
+        "state_attributes": {
+          "effect": {
+            "state": {
+              "stay_on": "Continu aan",
+              "fast_twinkling": "Snel twinkelen",
+              "fade_away": "Uitfaden",
+              "twinkling_in_phase": "Twinkelen in fase",
+              "fade_away_in_phase": "Uitfaden in fase",
+              "phasing": "Faseren",
+              "wave": "Golf",
+              "all_modes": "Alle modi"
+            }
+          }
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "device_not_found": {
+      "message": "Kerstverlichting met adres {address} niet gevonden"
+    },
+    "communication_error": {
+      "message": "Kan de opdracht niet naar de kerstverlichting sturen: {error}"
+    }
+  }
+}

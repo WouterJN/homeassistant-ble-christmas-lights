@@ -1,0 +1,53 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "description": "Choose the Christmas lights to set up.",
+        "data": {
+          "address": "Device"
+        }
+      },
+      "bluetooth_confirm": {
+        "description": "Do you want to set up {name}? Make sure the lights are switched on and the Lights App on your phone is closed."
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect. Make sure the lights are in range and not connected to your phone.",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "Device is already configured",
+      "no_devices_found": "No Christmas lights found nearby",
+      "not_supported": "This device is not supported"
+    }
+  },
+  "entity": {
+    "light": {
+      "christmas_lights": {
+        "state_attributes": {
+          "effect": {
+            "state": {
+              "stay_on": "Stay on",
+              "fast_twinkling": "Fast twinkling",
+              "fade_away": "Fade away",
+              "twinkling_in_phase": "Twinkling in phase",
+              "fade_away_in_phase": "Fade away in phase",
+              "phasing": "Phasing",
+              "wave": "Wave",
+              "all_modes": "All modes"
+            }
+          }
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "device_not_found": {
+      "message": "Could not find the Christmas lights with address {address}"
+    },
+    "communication_error": {
+      "message": "Could not send the command to the Christmas lights: {error}"
+    }
+  }
+}

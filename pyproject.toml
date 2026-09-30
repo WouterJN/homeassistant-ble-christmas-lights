@@ -1,0 +1,15 @@
+[tool.ruff]
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "RUF", "UP", "W"]
+ignore = [
+    "E501",    # line length is left to the formatter
+    "RUF012",  # Home Assistant entities declare _attr_ defaults as class attributes
+]
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
+known-first-party = ["homeassistant"]
+known-local-folder = ["custom_components"]
+combine-as-imports = true
