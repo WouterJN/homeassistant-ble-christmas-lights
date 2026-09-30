@@ -51,7 +51,7 @@ class ChristmasLightsCoordinator(DataUpdateCoordinator[DeviceState]):
     @callback
     def _async_device_updated(self, state: DeviceState) -> None:
         """Handle state pushed by the controller."""
-        if state.is_on is None:
+        if not self.device.is_connected:
             # The connection dropped; show the lights as unavailable until
             # the next poll reconnects.
             self.async_set_update_error(UpdateFailed("Connection lost"))
