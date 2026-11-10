@@ -19,6 +19,11 @@ DEFAULT_STAY_CONNECTED = True
 # that cannot be reached is tried again.
 UPDATE_INTERVAL = timedelta(seconds=30)
 
+# How long the lights keep showing their last state while reconnecting after
+# the connection dropped. A slow attempt carries on after that, but the lights
+# show as unavailable until it succeeds.
+RECONNECT_GRACE = 15
+
 # With the connection closed when idle: how often to connect to read the
 # state, and how long the connection stays open after the last command.
 IDLE_UPDATE_INTERVAL = timedelta(minutes=5)

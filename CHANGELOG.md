@@ -24,7 +24,8 @@ with `0.`, any release may still contain breaking changes.
 
 - When the Bluetooth connection drops, Home Assistant reconnects right away.
   The lights keep their last state in the meantime and only become
-  unavailable when reconnecting fails, instead of after every drop.
+  unavailable when reconnecting fails or takes longer than 15 seconds,
+  instead of after every drop.
 - Lights that were out of reach are reconnected as soon as they are seen
   again, without waiting for the next attempt.
 - A command that fails on a connection that went stale is tried once more on

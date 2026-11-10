@@ -36,6 +36,7 @@ from custom_components.ble_christmas_lights.const import (
     CONF_STAY_CONNECTED,
     DOMAIN,
     IDLE_UPDATE_INTERVAL,
+    RECONNECT_GRACE,
     UPDATE_INTERVAL,
 )
 
@@ -259,6 +260,58 @@ async def test_reconnects_at_once_after_a_drop(
     assert controller.connects == 2
     # Never unavailable in between, and the new state in one piece.
     assert changes == [(STATE_OFF, None)]
+
+    # Reconnected in time, so nothing happens when the grace period is over.
+    async_fire_time_changed(
+        hass, dt_util.utcnow() + timedelta(seconds=RECONNECT_GRACE + 1)
+    )
+    await settle(hass)
+    assert changes == [(STATE_OFF, None)]
+
+
+async def test_unavailable_while_reconnecting_takes_long(
+    hass, entry, ble_device, controller, state_changes, monkeypatch
+):
+    await setup(hass, entry)
+    changes = state_changes()
+    connected = asyncio.Event()
+
+    async def slow_establish(client_class, device, name, **kwargs):
+        await connected.wait()
+        controller.is_connected = True
+        controller.disconnected_callback = kwargs["disconnected_callback"]
+        return controller
+
+    monkeypatch.setattr(
+        "custom_components.ble_christmas_lights.device.establish_connection",
+        slow_establish,
+    )
+    # The reconnect does not finish, so only let the event loop run for a bit
+    # instead of waiting for everything to be done.
+    controller.drop_connection()
+    await asyncio.sleep(0.01)
+    # Within the grace period the last state is still shown.
+    assert changes == []
+
+    async_fire_time_changed(
+        hass, dt_util.utcnow() + timedelta(seconds=RECONNECT_GRACE + 1)
+    )
+    await asyncio.sleep(0.01)
+    assert hass.states.get(ENTITY_ID).state == STATE_UNAVAILABLE
+
+    # The attempt was not given up, and the light comes back when it
+    # succeeds, also though the state is the same as before the drop.
+    connected.set()
+    await settle(hass)
+    assert changes == [(STATE_UNAVAILABLE, None), (STATE_ON, 255)]
+
+
+async def test_grace_period_ends_when_unloaded(hass, entry, ble_device, controller):
+    await setup(hass, entry)
+    controller.connect_error = BleakError("out of range")
+    entry.runtime_data.async_reconnect()
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    await settle(hass)
 
 
 async def test_unavailable_when_reconnect_fails_and_back(

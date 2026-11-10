@@ -60,8 +60,12 @@ class ChristmasLightsLight(CoordinatorEntity[ChristmasLightsCoordinator], LightE
     @property
     @override
     def available(self) -> bool:
-        """Only available while the controller reports its state."""
-        return super().available and self.coordinator.data.is_on is not None
+        """Available while the state is known and the lights can be reached."""
+        return (
+            super().available
+            and not self.coordinator.reconnect_overdue
+            and self.coordinator.data.is_on is not None
+        )
 
     @property
     @override
