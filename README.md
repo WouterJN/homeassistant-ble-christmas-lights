@@ -44,8 +44,28 @@ One light entity per set of lights, with:
 | Wave | Golf |
 | All modes (cycles through all of them) | Alle modi |
 
-If you pick a mix of modes in the phone app, the light shows no effect until
-you pick one in Home Assistant.
+The `modes` attribute of the light lists the modes that are active.
+
+### A mix of modes
+
+The lights can also cycle through a selection of modes. Use the action
+`ble_christmas_lights.set_modes` for that:
+
+```yaml
+action: ble_christmas_lights.set_modes
+target:
+  entity_id: light.christmas_lights_eeff
+data:
+  modes:
+    - stay_on
+    - fade_away
+    - wave
+```
+
+The modes are `stay_on`, `fast_twinkling`, `fade_away`, `twinkling_in_phase`,
+`fade_away_in_phase`, `phasing` and `wave`. With a mix of modes, whether set
+here or in the phone app, the light shows no effect; the `modes` attribute
+shows the mix.
 
 ## Installation
 
@@ -74,11 +94,30 @@ lights are often too far from the Home Assistant server; an
 [ESPHome Bluetooth proxy](https://esphome.io/components/bluetooth_proxy.html)
 close to the lights solves that.
 
+### Using the phone app as well
+
+Home Assistant normally keeps its connection to the lights open, so the phone
+app cannot connect. To use both, open the lights under
+**Settings → Devices & services → BLE Christmas Lights**, choose **Configure**
+and turn off **Stay connected**. Home Assistant then only connects to send a
+command and to read the state every 5 minutes, and closes the connection again
+after 10 seconds. This also frees up a connection on a Bluetooth proxy.
+
+The price: commands take a little longer, a change made with the phone app
+can take up to 5 minutes to show, and the light can be unavailable in Home
+Assistant while the phone app is connected.
+
 ## Troubleshooting
 
 - **The light is unavailable**: the lights are out of range, switched off at
-  the plug, or connected to your phone. Home Assistant tries to reconnect
-  every 30 seconds.
+  the plug, or connected to your phone. Home Assistant reconnects as soon as
+  it sees the lights again, and otherwise tries every 30 seconds.
+- **Reporting a problem or another controller**: open the lights under
+  **Settings → Devices & services → BLE Christmas Lights**, choose
+  **Download diagnostics** from the menu (⋮) and attach the file to your
+  [issue](https://github.com/WouterJN/homeassistant-ble-christmas-lights/issues).
+  It holds the advertised name and the raw data the controller sent, not the
+  Bluetooth address.
 - **Debug logging**: add this to `configuration.yaml`:
 
   ```yaml
@@ -99,10 +138,15 @@ that used them.
 
 ```bash
 python3.14 -m venv .venv
-.venv/bin/pip install -r requirements-dev.txt
-.venv/bin/pytest
-.venv/bin/ruff check . && .venv/bin/ruff format --check .
+source .venv/bin/activate
+scripts/setup
+pytest
+ruff check . && ruff format --check .
 ```
+
+`requirements-dev.txt` pins the test framework, and with it the Home Assistant
+version the tests run against. `scripts/setup` installs the Bluetooth
+libraries at the versions that Home Assistant version needs.
 
 `protocol.py` describes the Bluetooth protocol and has no Home Assistant
 dependencies.

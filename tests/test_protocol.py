@@ -90,17 +90,31 @@ def test_parse_settings_report_with_timers():
     assert parse_notification(data) == SettingsReport(brightness=99, mode=Mode.STAY_ON)
 
 
-@pytest.mark.parametrize("data", ["", "0102", "000002010000", "ff" * 18, "00" * 18])
+@pytest.mark.parametrize(
+    "data",
+    [
+        "",
+        "0102",
+        "000002010000",
+        # Five bytes, but the power report prefix is not at the start.
+        "ff00000201",
+        "0100000201",
+        "ff" * 18,
+        "00" * 18,
+    ],
+)
 def test_parse_unknown(data):
     assert parse_notification(bytes.fromhex(data)) is None
 
 
-@pytest.mark.parametrize(("ha", "device"), [(0, 10), (1, 10), (128, 55), (255, 99)])
+@pytest.mark.parametrize(
+    ("ha", "device"), [(0, 10), (1, 10), (3, 11), (128, 54), (254, 99), (255, 99)]
+)
 def test_brightness_from_ha(ha, device):
     assert brightness_from_ha(ha) == device
 
 
-@pytest.mark.parametrize(("device", "ha"), [(10, 0), (99, 255), (0, 0), (120, 255)])
+@pytest.mark.parametrize(("device", "ha"), [(10, 1), (99, 255), (0, 1), (120, 255)])
 def test_brightness_to_ha(device, ha):
     assert brightness_to_ha(device) == ha
 
@@ -108,3 +122,8 @@ def test_brightness_to_ha(device, ha):
 def test_brightness_round_trip():
     for level in range(10, 100):
         assert brightness_from_ha(brightness_to_ha(level)) == level
+
+
+def test_brightness_is_never_zero_while_on():
+    # Home Assistant brightness 0 means "off", so every level must map above it.
+    assert min(brightness_to_ha(level) for level in range(10, 100)) == 1

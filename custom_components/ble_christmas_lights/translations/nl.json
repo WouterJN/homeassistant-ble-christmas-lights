@@ -22,6 +22,18 @@
       "not_supported": "Dit apparaat wordt niet ondersteund"
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "stay_connected": "Verbonden blijven"
+        },
+        "data_description": {
+          "stay_connected": "Houd de Bluetooth-verbinding met de verlichting open. Zet dit uit om de verlichting vrij te houden voor de app op je telefoon, of om een verbinding op een Bluetooth-proxy vrij te maken. Home Assistant maakt dan alleen verbinding om een opdracht te sturen en om elke 5 minuten de status uit te lezen; opdrachten duren daardoor iets langer."
+        }
+      }
+    }
+  },
   "entity": {
     "light": {
       "christmas_lights": {
@@ -37,7 +49,44 @@
               "wave": "Golf",
               "all_modes": "Alle modi"
             }
+          },
+          "modes": {
+            "name": "Modi",
+            "state": {
+              "stay_on": "Continu aan",
+              "fast_twinkling": "Snel twinkelen",
+              "fade_away": "Uitfaden",
+              "twinkling_in_phase": "Twinkelen in fase",
+              "fade_away_in_phase": "Uitfaden in fase",
+              "phasing": "Faseren",
+              "wave": "Golf"
+            }
           }
+        }
+      }
+    }
+  },
+  "selector": {
+    "mode": {
+      "options": {
+        "stay_on": "Continu aan",
+        "fast_twinkling": "Snel twinkelen",
+        "fade_away": "Uitfaden",
+        "twinkling_in_phase": "Twinkelen in fase",
+        "fade_away_in_phase": "Uitfaden in fase",
+        "phasing": "Faseren",
+        "wave": "Golf"
+      }
+    }
+  },
+  "services": {
+    "set_modes": {
+      "name": "Modi instellen",
+      "description": "Laat de verlichting één of meer modi afwisselen, zoals een mix van modi in de app op je telefoon.",
+      "fields": {
+        "modes": {
+          "name": "Modi",
+          "description": "De modi om af te wisselen."
         }
       }
     }
@@ -48,6 +97,9 @@
     },
     "communication_error": {
       "message": "Kan de opdracht niet naar de kerstverlichting sturen: {error}"
+    },
+    "unknown_effect": {
+      "message": "{effect} is geen effect van de kerstverlichting. Kies een van: {effects}"
     }
   }
 }

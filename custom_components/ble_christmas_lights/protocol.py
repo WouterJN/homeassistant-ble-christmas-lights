@@ -42,7 +42,7 @@ CMD_QUERY_POWER = bytes.fromhex("000003112611")
 CMD_QUERY_SETTINGS = bytes.fromhex("020000")
 
 _POWER_REPORT_LENGTH = 5
-_POWER_REPORT_MARKER = b"\x00\x00\x02"
+_POWER_REPORT_PREFIX = b"\x00\x00\x02"
 _SETTINGS_REPORT_LENGTH = 18
 _SETTINGS_REPORT_PREFIX = b"\x02\x00"
 
@@ -86,7 +86,7 @@ def mode_command(mode: Mode) -> bytes:
 
 def parse_notification(data: bytes) -> PowerReport | SettingsReport | None:
     """Decode a notification, or return None when it is not recognised."""
-    if len(data) == _POWER_REPORT_LENGTH and _POWER_REPORT_MARKER in data:
+    if len(data) == _POWER_REPORT_LENGTH and data.startswith(_POWER_REPORT_PREFIX):
         return PowerReport(is_on=data[3] == 0x01)
     if len(data) == _SETTINGS_REPORT_LENGTH and data.startswith(
         _SETTINGS_REPORT_PREFIX
@@ -97,13 +97,24 @@ def parse_notification(data: bytes) -> PowerReport | SettingsReport | None:
     return None
 
 
+# Home Assistant brightness runs from 1 to 255; 0 would mean "off".
+_HA_BRIGHTNESS_MIN = 1
+_HA_BRIGHTNESS_MAX = 255
+_HA_STEPS = _HA_BRIGHTNESS_MAX - _HA_BRIGHTNESS_MIN
+_DEVICE_STEPS = BRIGHTNESS_MAX - BRIGHTNESS_MIN
+
+
 def brightness_to_ha(level: int) -> int:
-    """Convert a device brightness level (10-99) to Home Assistant (0-255)."""
+    """Convert a device brightness level (10-99) to Home Assistant (1-255)."""
     level = max(BRIGHTNESS_MIN, min(BRIGHTNESS_MAX, level))
-    return round((level - BRIGHTNESS_MIN) / (BRIGHTNESS_MAX - BRIGHTNESS_MIN) * 255)
+    return _HA_BRIGHTNESS_MIN + round(
+        (level - BRIGHTNESS_MIN) / _DEVICE_STEPS * _HA_STEPS
+    )
 
 
 def brightness_from_ha(value: int) -> int:
-    """Convert a Home Assistant brightness (0-255) to a device level (10-99)."""
-    value = max(0, min(255, value))
-    return BRIGHTNESS_MIN + round(value / 255 * (BRIGHTNESS_MAX - BRIGHTNESS_MIN))
+    """Convert a Home Assistant brightness (1-255) to a device level (10-99)."""
+    value = max(_HA_BRIGHTNESS_MIN, min(_HA_BRIGHTNESS_MAX, value))
+    return BRIGHTNESS_MIN + round(
+        (value - _HA_BRIGHTNESS_MIN) / _HA_STEPS * _DEVICE_STEPS
+    )

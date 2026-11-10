@@ -1,8 +1,53 @@
 # Changelog
 
 All notable changes are listed here. Versions follow
-[Semantic Versioning](https://semver.org/lang/nl/): while the version starts
+[Semantic Versioning](https://semver.org/): while the version starts
 with `0.`, any release may still contain breaking changes.
+
+## [Unreleased]
+
+### Added
+
+- Option **Stay connected** (on by default). Turn it off to leave the lights
+  free for the phone app or to free up a connection on a Bluetooth proxy:
+  Home Assistant then only connects to send a command and to read the state
+  every 5 minutes.
+- Action `ble_christmas_lights.set_modes` to let the lights cycle through a
+  mix of modes, and a `modes` attribute that shows the active modes, also for
+  a mix set in the phone app.
+- Diagnostics download with the advertised name and the raw data the
+  controller sent, to help add support for other controllers. It does not
+  contain the Bluetooth address.
+- Icon for the light (a light string).
+
+### Changed
+
+- When the Bluetooth connection drops, Home Assistant reconnects right away.
+  The lights keep their last state in the meantime and only become
+  unavailable when reconnecting fails, instead of after every drop.
+- Lights that were out of reach are reconnected as soon as they are seen
+  again, without waiting for the next attempt.
+- A command that fails on a connection that went stale is tried once more on
+  a new connection, instead of failing the first time.
+- Brightness now runs from 1 to 255 instead of 0 to 255, so the lowest level
+  no longer shows as 0 while the lights are on. The same brightness value can
+  select a level that is one step lower than before.
+- Bluetooth discovery only starts for names that match
+  `LED-<digit>-<two digits>-00000000`, not for every name starting with `LED-`.
+
+### Fixed
+
+- Reloading the integration while it was reconnecting could leave a
+  connection open that nobody used. The lights then refused every new
+  connection until Home Assistant was restarted.
+- A state query and a command could run at the same time, after which the
+  answer to the query could overwrite the result of the command.
+- After reconnecting, the light briefly showed as on without a brightness.
+- After a command that failed, the light kept showing its old state until the
+  next attempt to read it.
+- Choosing an effect that does not exist now gives a clear error.
+- A notification of five bytes was read as "lights off" when it had the bytes
+  of a power report in another position; it is now ignored.
 
 ## [0.2.1] - 2026-09-30
 

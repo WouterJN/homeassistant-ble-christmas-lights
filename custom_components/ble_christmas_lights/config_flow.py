@@ -12,10 +12,16 @@ from homeassistant.components.bluetooth import (
     async_ble_device_from_address,
     async_discovered_service_info,
 )
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlowWithReload,
+)
 from homeassistant.const import CONF_ADDRESS
+from homeassistant.core import callback
 
-from .const import DOMAIN, SUPPORTED_NAME
+from .const import CONF_STAY_CONNECTED, DEFAULT_STAY_CONNECTED, DOMAIN, SUPPORTED_NAME
 from .device import BLEAK_EXCEPTIONS, CharacteristicMissingError, ChristmasLights
 
 _LOGGER = logging.getLogger(__name__)
@@ -34,6 +40,15 @@ class ChristmasLightsConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for BLE Christmas Lights."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    @override
+    def async_get_options_flow(
+        config_entry: ConfigEntry,
+    ) -> ChristmasLightsOptionsFlow:
+        """Return the options flow."""
+        return ChristmasLightsOptionsFlow()
 
     def __init__(self) -> None:
         """Initialize the config flow."""
@@ -140,3 +155,28 @@ class ChristmasLightsConfigFlow(ConfigFlow, domain=DOMAIN):
         finally:
             await device.stop()
         return None
+
+
+class ChristmasLightsOptionsFlow(OptionsFlowWithReload):
+    """Options for a set of lights; the entry is reloaded when they change."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Choose whether the connection is kept open."""
+        if user_input is not None:
+            return self.async_create_entry(data=user_input)
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=self.add_suggested_values_to_schema(
+                probatio.Schema(
+                    {
+                        probatio.Required(
+                            CONF_STAY_CONNECTED, default=DEFAULT_STAY_CONNECTED
+                        ): bool
+                    }
+                ),
+                self.config_entry.options,
+            ),
+        )
