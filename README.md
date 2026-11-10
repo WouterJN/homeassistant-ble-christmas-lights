@@ -4,6 +4,7 @@
 
 [![Validate](https://github.com/WouterJN/homeassistant-ble-christmas-lights/actions/workflows/validate.yml/badge.svg)](https://github.com/WouterJN/homeassistant-ble-christmas-lights/actions/workflows/validate.yml)
 [![Tests](https://github.com/WouterJN/homeassistant-ble-christmas-lights/actions/workflows/tests.yml/badge.svg)](https://github.com/WouterJN/homeassistant-ble-christmas-lights/actions/workflows/tests.yml)
+[![Latest Home Assistant](https://github.com/WouterJN/homeassistant-ble-christmas-lights/actions/workflows/latest.yml/badge.svg)](https://github.com/WouterJN/homeassistant-ble-christmas-lights/actions/workflows/latest.yml)
 
 Control Bluetooth (BLE) Christmas lights from Home Assistant: the cluster
 lights and light strings that you normally control with the
@@ -111,7 +112,9 @@ Assistant while the phone app is connected.
 
 - **The light is unavailable**: the lights are out of range, switched off at
   the plug, or connected to your phone. Home Assistant reconnects as soon as
-  it sees the lights again, and otherwise tries every 30 seconds.
+  it sees the lights again, and otherwise tries every 30 seconds. After a
+  short drop the light keeps its state for up to 15 seconds while Home
+  Assistant reconnects.
 - **Reporting a problem or another controller**: open the lights under
   **Settings → Devices & services → BLE Christmas Lights**, choose
   **Download diagnostics** from the menu (⋮) and attach the file to your
@@ -147,6 +150,10 @@ ruff check . && ruff format --check .
 `requirements-dev.txt` pins the test framework, and with it the Home Assistant
 version the tests run against. `scripts/setup` installs the Bluetooth
 libraries at the versions that Home Assistant version needs.
+
+Once a week the tests also run against the newest Home Assistant
+(`scripts/setup --latest`). When that fails, fix what broke and raise the pin
+in `requirements-dev.txt`.
 
 `protocol.py` describes the Bluetooth protocol and has no Home Assistant
 dependencies.

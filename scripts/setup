@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
 # Install everything needed to run the tests and the linter, into the active
 # Python environment.
+#
+#   scripts/setup            the Home Assistant version pinned in requirements-dev.txt
+#   scripts/setup --latest   the newest Home Assistant that can be tested
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-python -m pip install -r requirements-dev.txt
+if [[ "${1:-}" == "--latest" ]]; then
+  python -m pip install --upgrade pytest-homeassistant-custom-component ruff
+else
+  python -m pip install -r requirements-dev.txt
+fi
 
 # Home Assistant's bluetooth integration only works with the exact library
 # versions that Home Assistant itself pins, so install them with its own
