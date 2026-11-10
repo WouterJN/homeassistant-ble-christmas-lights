@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Install everything needed to run the tests and the linter, into the active
+# Python environment.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+python -m pip install -r requirements-dev.txt
+
+# Home Assistant's bluetooth integration only works with the exact library
+# versions that Home Assistant itself pins, so install them with its own
+# constraints file.
+constraints="$(python -c 'import homeassistant, pathlib; print(pathlib.Path(homeassistant.__file__).with_name("package_constraints.txt"))')"
+python -m pip install -r requirements-bluetooth.txt -c "$constraints"

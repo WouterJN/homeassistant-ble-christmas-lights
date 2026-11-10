@@ -1,0 +1,11 @@
+# Requirements of Home Assistant's bluetooth integration, which this one
+# depends on. scripts/setup installs them at the versions Home Assistant pins.
+aiousbwatcher
+bleak
+bleak-retry-connector
+bluetooth-adapters
+bluetooth-auto-recovery
+bluetooth-data-tools
+dbus-fast
+habluetooth
+serialx
