@@ -1,0 +1,17 @@
+{
+  "entity": {
+    "light": {
+      "christmas_lights": {
+        "default": "mdi:string-lights",
+        "state": {
+          "off": "mdi:string-lights-off"
+        }
+      }
+    }
+  },
+  "services": {
+    "set_modes": {
+      "service": "mdi:auto-fix"
+    }
+  }
+}

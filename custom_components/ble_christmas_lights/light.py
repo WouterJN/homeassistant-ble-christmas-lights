@@ -13,15 +13,15 @@ from homeassistant.components.light import (
     LightEntityFeature,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers.device_registry import CONNECTION_BLUETOOTH, DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, EFFECTS
+from .const import ATTR_MODES, DOMAIN, EFFECTS, MODES
 from .coordinator import ChristmasLightsConfigEntry, ChristmasLightsCoordinator
 from .device import BLEAK_EXCEPTIONS
-from .protocol import brightness_from_ha, brightness_to_ha
+from .protocol import Mode, brightness_from_ha, brightness_to_ha
 
 PARALLEL_UPDATES = 1
 
@@ -60,8 +60,12 @@ class ChristmasLightsLight(CoordinatorEntity[ChristmasLightsCoordinator], LightE
     @property
     @override
     def available(self) -> bool:
-        """Only available while the controller reports its state."""
-        return super().available and self.coordinator.data.is_on is not None
+        """Available while the state is known and the lights can be reached."""
+        return (
+            super().available
+            and not self.coordinator.reconnect_overdue
+            and self.coordinator.data.is_on is not None
+        )
 
     @property
     @override
@@ -72,7 +76,7 @@ class ChristmasLightsLight(CoordinatorEntity[ChristmasLightsCoordinator], LightE
     @property
     @override
     def brightness(self) -> int | None:
-        """Return the brightness (0-255)."""
+        """Return the brightness (1-255)."""
         level = self.coordinator.data.brightness
         return None if level is None else brightness_to_ha(level)
 
@@ -83,11 +87,28 @@ class ChristmasLightsLight(CoordinatorEntity[ChristmasLightsCoordinator], LightE
         mode = self.coordinator.data.mode
         return next((name for name, flag in EFFECTS.items() if flag == mode), None)
 
+    @property
+    @override
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return the modes the lights cycle through, also for a custom mix."""
+        if (mode := self.coordinator.data.mode) is None:
+            return None
+        return {ATTR_MODES: [name for name, flag in MODES.items() if flag in mode]}
+
     @override
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the lights on, optionally with a brightness and effect."""
         brightness = kwargs.get(ATTR_BRIGHTNESS)
         effect = kwargs.get(ATTR_EFFECT)
+        if effect is not None and effect not in EFFECTS:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="unknown_effect",
+                translation_placeholders={
+                    "effect": effect,
+                    "effects": ", ".join(EFFECTS),
+                },
+            )
         await self._async_call(
             self.coordinator.device.turn_on(
                 brightness=None
@@ -102,11 +123,21 @@ class ChristmasLightsLight(CoordinatorEntity[ChristmasLightsCoordinator], LightE
         """Turn the lights off."""
         await self._async_call(self.coordinator.device.turn_off())
 
+    async def async_set_modes(self, modes: list[str]) -> None:
+        """Let the lights cycle through one or more modes."""
+        mode = Mode(0)
+        for name in modes:
+            mode |= MODES[name]
+        await self._async_call(self.coordinator.device.set_mode(mode))
+
     async def _async_call(self, command: Awaitable[None]) -> None:
         """Send a command and turn Bluetooth errors into a readable error."""
         try:
             await command
         except BLEAK_EXCEPTIONS as err:
+            # The connection is closed by now. Find out whether the lights
+            # can still be reached, so the state shown is not a stale one.
+            self.coordinator.async_reconnect()
             raise HomeAssistantError(
                 translation_domain=DOMAIN,
                 translation_key="communication_error",

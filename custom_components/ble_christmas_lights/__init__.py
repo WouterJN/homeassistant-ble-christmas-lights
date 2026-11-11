@@ -2,17 +2,45 @@
 
 from __future__ import annotations
 
+import probatio
+
 from homeassistant.components import bluetooth
 from homeassistant.components.bluetooth.match import ADDRESS, BluetoothCallbackMatcher
+from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.const import CONF_ADDRESS, EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import config_validation as cv, service
+from homeassistant.helpers.typing import ConfigType
 
-from .const import DOMAIN
-from .coordinator import ChristmasLightsConfigEntry, ChristmasLightsCoordinator
+from .const import ATTR_MODES, DOMAIN, IDLE_DISCONNECT_DELAY, MODES, SERVICE_SET_MODES
+from .coordinator import (
+    ChristmasLightsConfigEntry,
+    ChristmasLightsCoordinator,
+    stay_connected,
+)
 from .device import ChristmasLights
 
 PLATFORMS: list[Platform] = [Platform.LIGHT]
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Register the services."""
+    service.async_register_platform_entity_service(
+        hass,
+        DOMAIN,
+        SERVICE_SET_MODES,
+        entity_domain=LIGHT_DOMAIN,
+        schema={
+            probatio.Required(ATTR_MODES): probatio.All(
+                cv.ensure_list, [probatio.In(list(MODES))], probatio.Length(min=1)
+            )
+        },
+        func="async_set_modes",
+    )
+    return True
 
 
 async def async_setup_entry(
@@ -28,15 +56,20 @@ async def async_setup_entry(
             translation_placeholders={"address": address},
         )
 
-    device = ChristmasLights(ble_device)
+    device = ChristmasLights(
+        ble_device,
+        idle_disconnect_delay=None if stay_connected(entry) else IDLE_DISCONNECT_DELAY,
+    )
+    coordinator = ChristmasLightsCoordinator(hass, entry, device)
 
     @callback
     def _async_update_ble(
         service_info: bluetooth.BluetoothServiceInfoBleak,
         change: bluetooth.BluetoothChange,
     ) -> None:
-        """Keep the device's BLEDevice up to date."""
+        """Keep the BLEDevice up to date and reconnect to lights that are back."""
         device.set_ble_device(service_info.device)
+        coordinator.async_device_seen()
 
     entry.async_on_unload(
         bluetooth.async_register_callback(
@@ -47,7 +80,6 @@ async def async_setup_entry(
         )
     )
 
-    coordinator = ChristmasLightsCoordinator(hass, entry, device)
     try:
         await coordinator.async_config_entry_first_refresh()
     except ConfigEntryNotReady:

@@ -3,6 +3,7 @@
 from unittest.mock import AsyncMock, MagicMock
 
 from bleak.backends.device import BLEDevice
+from bleak.exc import BleakError
 import pytest
 
 from homeassistant.components.bluetooth import BluetoothServiceInfoBleak
@@ -65,6 +66,12 @@ class FakeController:
         self.brightness = brightness
         self.mode = mode
         self.written: list[bytes] = []
+        # How many times a connection was made, and an error to fail the
+        # next attempts with.
+        self.connects = 0
+        self.connect_error: Exception | None = None
+        # How many of the next writes fail, as on a connection gone stale.
+        self.failing_writes = 0
         self.is_connected = True
         self.disconnected_callback = None
         self._notify = None
@@ -84,6 +91,9 @@ class FakeController:
 
     async def write_gatt_char(self, char, data, response):
         assert response is True
+        if self.failing_writes:
+            self.failing_writes -= 1
+            raise BleakError("write failed")
         self.written.append(bytes(data))
         if data == bytes.fromhex("000003112611"):
             self.notify(POWER_ON_REPORT if self.is_on else POWER_OFF_REPORT)
@@ -113,6 +123,9 @@ def controller(monkeypatch):
     async def establish_connection(
         client_class, device, name, disconnected_callback=None, **kwargs
     ):
+        if fake.connect_error:
+            raise fake.connect_error
+        fake.connects += 1
         fake.is_connected = True
         fake.disconnected_callback = disconnected_callback
         return fake

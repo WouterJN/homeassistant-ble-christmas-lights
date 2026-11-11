@@ -1,0 +1,20 @@
+set_modes:
+  target:
+    entity:
+      integration: ble_christmas_lights
+      domain: light
+  fields:
+    modes:
+      required: true
+      selector:
+        select:
+          multiple: true
+          translation_key: mode
+          options:
+            - stay_on
+            - fast_twinkling
+            - fade_away
+            - twinkling_in_phase
+            - fade_away_in_phase
+            - phasing
+            - wave

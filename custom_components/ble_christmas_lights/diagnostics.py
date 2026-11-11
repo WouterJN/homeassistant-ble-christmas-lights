@@ -1,0 +1,59 @@
+"""Diagnostics for the BLE Christmas Lights integration."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from homeassistant.components import bluetooth
+from homeassistant.core import HomeAssistant
+
+from .const import MODES
+from .coordinator import ChristmasLightsConfigEntry
+
+
+async def async_get_config_entry_diagnostics(
+    hass: HomeAssistant, entry: ChristmasLightsConfigEntry
+) -> dict[str, Any]:
+    """Return diagnostics for a config entry.
+
+    The Bluetooth address is left out; everything else is what is needed to
+    add support for a controller that behaves differently.
+    """
+    coordinator = entry.runtime_data
+    device = coordinator.device
+    state = device.state
+    service_info = bluetooth.async_last_service_info(
+        hass, device.address, connectable=True
+    )
+
+    return {
+        "options": dict(entry.options),
+        "advertisement": service_info
+        and {
+            "name": service_info.name,
+            "rssi": service_info.rssi,
+            "service_uuids": service_info.service_uuids,
+            "manufacturer_data": {
+                str(company): data.hex()
+                for company, data in service_info.manufacturer_data.items()
+            },
+            "service_data": {
+                uuid: data.hex() for uuid, data in service_info.service_data.items()
+            },
+        },
+        "connected": device.is_connected,
+        "last_update_success": coordinator.last_update_success,
+        "state": {
+            "is_on": state.is_on,
+            "brightness": state.brightness,
+            "mode": None if state.mode is None else f"0x{int(state.mode):02x}",
+            "modes": None
+            if state.mode is None
+            else [name for name, flag in MODES.items() if flag in state.mode],
+        },
+        "notifications": {
+            "power_report": device.last_power_report,
+            "settings_report": device.last_settings_report,
+            "unrecognised": list(device.unrecognised_notifications),
+        },
+    }

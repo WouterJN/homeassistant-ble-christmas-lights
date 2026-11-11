@@ -22,6 +22,18 @@
       "not_supported": "This device is not supported"
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "stay_connected": "Stay connected"
+        },
+        "data_description": {
+          "stay_connected": "Keep the Bluetooth connection to the lights open. Turn this off to leave the lights free for the phone app, or to free up a connection on a Bluetooth proxy. Home Assistant then only connects to send a command and to read the state every 5 minutes, so commands take a little longer."
+        }
+      }
+    }
+  },
   "entity": {
     "light": {
       "christmas_lights": {
@@ -37,7 +49,44 @@
               "wave": "Wave",
               "all_modes": "All modes"
             }
+          },
+          "modes": {
+            "name": "Modes",
+            "state": {
+              "stay_on": "Stay on",
+              "fast_twinkling": "Fast twinkling",
+              "fade_away": "Fade away",
+              "twinkling_in_phase": "Twinkling in phase",
+              "fade_away_in_phase": "Fade away in phase",
+              "phasing": "Phasing",
+              "wave": "Wave"
+            }
           }
+        }
+      }
+    }
+  },
+  "selector": {
+    "mode": {
+      "options": {
+        "stay_on": "Stay on",
+        "fast_twinkling": "Fast twinkling",
+        "fade_away": "Fade away",
+        "twinkling_in_phase": "Twinkling in phase",
+        "fade_away_in_phase": "Fade away in phase",
+        "phasing": "Phasing",
+        "wave": "Wave"
+      }
+    }
+  },
+  "services": {
+    "set_modes": {
+      "name": "Set modes",
+      "description": "Lets the lights cycle through one or more modes, like a mix of modes in the phone app.",
+      "fields": {
+        "modes": {
+          "name": "Modes",
+          "description": "The modes to cycle through."
         }
       }
     }
@@ -48,6 +97,9 @@
     },
     "communication_error": {
       "message": "Could not send the command to the Christmas lights: {error}"
+    },
+    "unknown_effect": {
+      "message": "{effect} is not an effect of the Christmas lights. Choose one of: {effects}"
     }
   }
 }

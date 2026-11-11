@@ -1,5 +1,8 @@
 """Tests for the config flow."""
 
+from fnmatch import fnmatch
+import json
+from pathlib import Path
 from unittest.mock import patch
 
 from bleak.exc import BleakError
@@ -12,7 +15,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
 from .conftest import ADDRESS, make_service_info
-from custom_components.ble_christmas_lights.const import DOMAIN
+from custom_components.ble_christmas_lights.const import CONF_STAY_CONNECTED, DOMAIN
 from custom_components.ble_christmas_lights.device import CharacteristicMissingError
 
 FLOW = "custom_components.ble_christmas_lights.config_flow"
@@ -140,3 +143,78 @@ async def test_already_configured(hass: HomeAssistant):
     )
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "already_configured"
+
+
+async def test_bluetooth_discovery_not_supported(hass: HomeAssistant):
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_BLUETOOTH}, data=make_service_info()
+    )
+    with patch_update(CharacteristicMissingError("nope")):
+        result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "not_supported"
+
+
+async def test_user_step_errors_then_success(hass: HomeAssistant):
+    with patch(
+        f"{FLOW}.async_discovered_service_info", return_value=[make_service_info()]
+    ):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": SOURCE_USER}
+        )
+        flow_id = result["flow_id"]
+
+        # The lights went out of range between the scan and the attempt.
+        with patch(f"{FLOW}.async_ble_device_from_address", return_value=None):
+            result = await hass.config_entries.flow.async_configure(
+                flow_id, {CONF_ADDRESS: ADDRESS}
+            )
+        assert result["type"] is FlowResultType.FORM
+        assert result["errors"] == {"base": "cannot_connect"}
+
+        with patch_update(RuntimeError("boom")):
+            result = await hass.config_entries.flow.async_configure(
+                flow_id, {CONF_ADDRESS: ADDRESS}
+            )
+        assert result["type"] is FlowResultType.FORM
+        assert result["errors"] == {"base": "unknown"}
+
+        with patch_update():
+            result = await hass.config_entries.flow.async_configure(
+                flow_id, {CONF_ADDRESS: ADDRESS}
+            )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+
+
+async def test_options_flow(hass: HomeAssistant):
+    entry = MockConfigEntry(
+        domain=DOMAIN, unique_id=ADDRESS, data={CONF_ADDRESS: ADDRESS}
+    )
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "init"
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {CONF_STAY_CONNECTED: False}
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.options == {CONF_STAY_CONNECTED: False}
+
+
+@pytest.mark.parametrize(
+    ("name", "matches"),
+    [
+        ("LED-4-01-00000000", True),
+        ("LED-3-05-00000000", True),
+        ("LED-strip", False),
+        ("LED-BLE-12345678", False),
+    ],
+)
+def test_manifest_only_starts_discovery_for_these_controllers(name, matches):
+    manifest = json.loads(
+        Path("custom_components/ble_christmas_lights/manifest.json").read_text()
+    )
+    (matcher,) = manifest["bluetooth"]
+    assert fnmatch(name, matcher["local_name"]) is matches
