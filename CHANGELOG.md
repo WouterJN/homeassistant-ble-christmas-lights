@@ -4,7 +4,7 @@ All notable changes are listed here. Versions follow
 [Semantic Versioning](https://semver.org/): while the version starts
 with `0.`, any release may still contain breaking changes.
 
-## [Unreleased]
+## [0.3.0] - 2026-11-11
 
 ### Added
 
@@ -47,8 +47,6 @@ with `0.`, any release may still contain breaking changes.
 - After a command that failed, the light kept showing its old state until the
   next attempt to read it.
 - Choosing an effect that does not exist now gives a clear error.
-- A notification of five bytes was read as "lights off" when it had the bytes
-  of a power report in another position; it is now ignored.
 
 ## [0.2.1] - 2026-09-30
 
