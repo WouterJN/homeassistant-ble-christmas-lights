@@ -3,7 +3,7 @@
   "name": "BLE Christmas Lights",
   "bluetooth": [
     {
-      "local_name": "LED-?-??-00000000",
+      "local_name": "LED-?-??*",
       "connectable": true
     }
   ],

@@ -50,6 +50,9 @@ async def async_get_config_entry_diagnostics(
             "modes": None
             if state.mode is None
             else [name for name, flag in MODES.items() if flag in state.mode],
+            "timers_enabled": state.timers_enabled,
+            "timers": state.timers
+            and [f"{timer.start:%H:%M}-{timer.end:%H:%M}" for timer in state.timers],
         },
         "notifications": {
             "power_report": device.last_power_report,

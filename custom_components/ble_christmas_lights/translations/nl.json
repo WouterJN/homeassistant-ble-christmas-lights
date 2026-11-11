@@ -64,6 +64,24 @@
           }
         }
       }
+    },
+    "switch": {
+      "timer": {
+        "name": "Timer"
+      }
+    },
+    "time": {
+      "timer_start": {
+        "name": "Timer {number} start"
+      },
+      "timer_end": {
+        "name": "Timer {number} einde"
+      }
+    },
+    "button": {
+      "restore_defaults": {
+        "name": "Standaardinstellingen herstellen"
+      }
     }
   },
   "selector": {
@@ -100,6 +118,9 @@
     },
     "unknown_effect": {
       "message": "{effect} is geen effect van de kerstverlichting. Kies een van: {effects}"
+    },
+    "timers_unknown": {
+      "message": "De timers van de kerstverlichting zijn nog niet uitgelezen"
     }
   }
 }

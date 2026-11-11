@@ -4,6 +4,38 @@ All notable changes are listed here. Versions follow
 [Semantic Versioning](https://semver.org/): while the version starts
 with `0.`, any release may still contain breaking changes.
 
+## [Unreleased]
+
+Compared with the Lights App itself (version 2.2), which showed what the
+bytes of the controller mean.
+
+### Added
+
+- **Timer** switch: whether the timers of the controller decide when the
+  lights are lit.
+- Start and end time of the three timers. The second and third timer are
+  disabled by default.
+- **Restore default settings** button.
+- The device page shows which kind of lights it is, such as `LED-4-02`.
+
+### Changed
+
+- Controllers are recognised by the start of their name
+  (`LED-<digit>-<two digits>`), like the app does, instead of only when the
+  name ends in `-00000000`.
+- Notifications from the controller are recognised by their length alone,
+  like the app does.
+
+### Fixed
+
+- Reading the state set the clock of the controller to 17:38:17 every time,
+  so timers set in the app ran at the wrong moments. The clock is now set to
+  the local time of Home Assistant.
+- Lights that were on with the timers enabled showed as off.
+- Switching the lights on or off from Home Assistant disabled the timers.
+- After choosing "Auto Rotate" in the app, the light could show the effect
+  that was selected before, instead of "All modes".
+
 ## [0.3.0] - 2026-11-11
 
 ### Added

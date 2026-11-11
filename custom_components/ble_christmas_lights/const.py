@@ -8,7 +8,9 @@ from .protocol import ALL_MODES, Mode
 DOMAIN = "ble_christmas_lights"
 
 # Bluetooth names the controllers advertise with, e.g. "LED-4-02-00000000".
-SUPPORTED_NAME = re.compile(r"LED-\d-\d\d-00000000")
+# The first three parts say which kind of lights it is; like the app, the
+# rest of the name is not looked at.
+SUPPORTED_NAME = re.compile(r"(LED-\d-\d\d)(-.*)?")
 
 # Option: keep the Bluetooth connection open (the default), or close it when
 # idle so the phone app or another device can use it.

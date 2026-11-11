@@ -7,6 +7,27 @@
           "off": "mdi:string-lights-off"
         }
       }
+    },
+    "switch": {
+      "timer": {
+        "default": "mdi:timer-outline",
+        "state": {
+          "off": "mdi:timer-off-outline"
+        }
+      }
+    },
+    "time": {
+      "timer_start": {
+        "default": "mdi:clock-start"
+      },
+      "timer_end": {
+        "default": "mdi:clock-end"
+      }
+    },
+    "button": {
+      "restore_defaults": {
+        "default": "mdi:restore"
+      }
     }
   },
   "services": {

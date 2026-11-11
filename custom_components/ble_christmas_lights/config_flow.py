@@ -20,6 +20,7 @@ from homeassistant.config_entries import (
 )
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import callback
+from homeassistant.util import dt as dt_util
 
 from .const import CONF_STAY_CONNECTED, DEFAULT_STAY_CONNECTED, DOMAIN, SUPPORTED_NAME
 from .device import BLEAK_EXCEPTIONS, CharacteristicMissingError, ChristmasLights
@@ -141,7 +142,7 @@ class ChristmasLightsConfigFlow(ConfigFlow, domain=DOMAIN):
         ble_device = async_ble_device_from_address(self.hass, address, True)
         if ble_device is None:
             return "cannot_connect"
-        device = ChristmasLights(ble_device)
+        device = ChristmasLights(ble_device, now=dt_util.now)
         try:
             await device.update()
         except CharacteristicMissingError:

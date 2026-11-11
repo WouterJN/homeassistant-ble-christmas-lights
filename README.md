@@ -19,8 +19,10 @@ over Bluetooth.
 ## Supported lights
 
 Lights that show up in the Lights App and advertise over Bluetooth as
-names like `LED-4-01-00000000` or `LED-4-02-00000000` (the pattern
-`LED-<digit>-<two digits>-00000000`), such as the 5.5 m and 48 m versions.
+names like `LED-4-01-00000000` or `LED-4-02-00000000` (names that start with
+`LED-<digit>-<two digits>`), such as the 5.5 m and 48 m versions. The Lights
+App knows the kinds `LED-4`, `LED-5` and `LED-6`, each in the versions `01`,
+`02`, `03`, `04` and `08`.
 
 Do your lights advertise with another name? Please
 [open an issue](https://github.com/WouterJN/homeassistant-ble-christmas-lights/issues)
@@ -28,11 +30,14 @@ with the name you see in a Bluetooth scanner app (such as nRF Connect).
 
 ## What you get
 
-One light entity per set of lights, with:
+Per set of lights:
 
-- **On/off**
-- **Brightness**: the lights have 90 brightness steps
-- **Effects**: the light modes from the app
+- A **light**, with on/off, brightness (the lights have 90 brightness steps)
+  and the light modes from the app as effects.
+- A **Timer** switch and the start and end time of three timers; see
+  [Timers](#timers).
+- A **Restore default settings** button: full brightness, cycling through all
+  modes, and one timer from 18:00 to 23:59.
 
 | Effect | Dutch name in Home Assistant |
 | --- | --- |
@@ -67,6 +72,24 @@ The modes are `stay_on`, `fast_twinkling`, `fade_away`, `twinkling_in_phase`,
 `fade_away_in_phase`, `phasing` and `wave`. With a mix of modes, whether set
 here or in the phone app, the light shows no effect; the `modes` attribute
 shows the mix.
+
+## Timers
+
+The controller of the lights can switch them on and off by itself, also when
+Home Assistant is not connected. It has three timers, each with a start and
+an end time.
+
+- The **Timer** switch decides whether the timers are used. While it is on,
+  the lights are only lit between the start and the end of a timer. The light
+  in Home Assistant then still shows as on outside those times: it shows
+  whether the lights are switched on, not whether they are lit right now.
+- **Timer 1 start** and **Timer 1 end** set the first timer. The second and
+  third timer are disabled entities; enable them on the device page if you
+  need them. A timer from 00:00 to 00:00 is not in use.
+
+Home Assistant sets the clock of the controller to its own local time every
+time it reads the state, so the timers follow the time zone and the summer
+time of Home Assistant.
 
 ## Installation
 

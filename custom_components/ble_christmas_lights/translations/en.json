@@ -64,6 +64,24 @@
           }
         }
       }
+    },
+    "switch": {
+      "timer": {
+        "name": "Timer"
+      }
+    },
+    "time": {
+      "timer_start": {
+        "name": "Timer {number} start"
+      },
+      "timer_end": {
+        "name": "Timer {number} end"
+      }
+    },
+    "button": {
+      "restore_defaults": {
+        "name": "Restore default settings"
+      }
     }
   },
   "selector": {
@@ -100,6 +118,9 @@
     },
     "unknown_effect": {
       "message": "{effect} is not an effect of the Christmas lights. Choose one of: {effects}"
+    },
+    "timers_unknown": {
+      "message": "The timers of the Christmas lights have not been read yet"
     }
   }
 }

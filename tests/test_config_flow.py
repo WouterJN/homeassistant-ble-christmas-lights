@@ -55,7 +55,16 @@ async def test_bluetooth_discovery(hass: HomeAssistant, controller):
     assert result["result"].unique_id == ADDRESS
 
 
-@pytest.mark.parametrize("name", ["LED-3-05-00000000", "LED-4-02-00000000"])
+@pytest.mark.parametrize(
+    "name",
+    [
+        "LED-3-05-00000000",
+        "LED-4-02-00000000",
+        # Like the app, only look at the first three parts of the name.
+        "LED-4-02-12345678",
+        "LED-6-08",
+    ],
+)
 async def test_bluetooth_discovery_supported_names(hass: HomeAssistant, name):
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_BLUETOOTH}, data=make_service_info(name=name)
@@ -64,7 +73,7 @@ async def test_bluetooth_discovery_supported_names(hass: HomeAssistant, name):
 
 
 @pytest.mark.parametrize(
-    "name", ["LED-4-02-12345678", "LED-strip", "LED-44-02-00000000"]
+    "name", ["LED-strip", "LED-44-02-00000000", "LED-4-021", "XLED-4-02-00000000"]
 )
 async def test_bluetooth_discovery_unsupported_name(hass: HomeAssistant, name):
     result = await hass.config_entries.flow.async_init(
@@ -208,6 +217,8 @@ async def test_options_flow(hass: HomeAssistant):
     [
         ("LED-4-01-00000000", True),
         ("LED-3-05-00000000", True),
+        ("LED-4-02-12345678", True),
+        ("LED-6-08", True),
         ("LED-strip", False),
         ("LED-BLE-12345678", False),
     ],

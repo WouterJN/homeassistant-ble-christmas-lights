@@ -23,14 +23,23 @@ POWER_ON_REPORT = bytes.fromhex("0000020100")
 POWER_OFF_REPORT = bytes.fromhex("0000020000")
 
 
-def settings_report(brightness: int, mode: int) -> bytes:
+NO_TIMERS = bytes(12)
+# What "Restore Default Settings" gives: one timer from 18:00 to 23:59.
+DEFAULT_TIMERS = bytes((18, 0, 23, 59)) + bytes(8)
+
+
+def power_report(is_on: bool, timers_enabled: bool = False) -> bytes:
+    """Build a 5-byte power reply as the controller sends it."""
+    return bytes((0x00, 0x00, 0x02, int(is_on) | int(timers_enabled) << 1, 0x00))
+
+
+def settings_report(
+    brightness: int, mode: int, theme: int = 0x03, timers: bytes = NO_TIMERS
+) -> bytes:
     """Build an 18-byte settings reply as the controller sends it."""
+    assert len(timers) == 12
     return (
-        bytes.fromhex("02000f")
-        + bytes((brightness,))
-        + bytes(12)  # three unset timers
-        + bytes.fromhex("03")
-        + bytes((mode,))
+        bytes.fromhex("02000f") + bytes((brightness,)) + timers + bytes((theme, mode))
     )
 
 
@@ -63,8 +72,13 @@ class FakeController:
 
     def __init__(self, is_on=True, brightness=99, mode=0x40, has_service=True):
         self.is_on = is_on
+        self.timers_enabled = False
         self.brightness = brightness
+        self.theme = 0x03
         self.mode = mode
+        self.timers = NO_TIMERS
+        # The time of day the controller was last given, as (hour, minute, second).
+        self.clock: tuple[int, int, int] | None = None
         self.written: list[bytes] = []
         # How many times a connection was made, and an error to fail the
         # next attempts with.
@@ -94,11 +108,29 @@ class FakeController:
         if self.failing_writes:
             self.failing_writes -= 1
             raise BleakError("write failed")
-        self.written.append(bytes(data))
-        if data == bytes.fromhex("000003112611"):
-            self.notify(POWER_ON_REPORT if self.is_on else POWER_OFF_REPORT)
+        data = bytes(data)
+        self.written.append(data)
+        if len(data) == 6 and data.startswith(bytes.fromhex("000003")):
+            self.clock = (data[3], data[4], data[5])
+            self.notify(power_report(self.is_on, self.timers_enabled))
         elif data == bytes.fromhex("020000"):
-            self.notify(settings_report(self.brightness, self.mode))
+            self.notify(
+                settings_report(self.brightness, self.mode, self.theme, self.timers)
+            )
+        elif len(data) == 4 and data.startswith(bytes.fromhex("010101")):
+            self.is_on = bool(data[3] & 1)
+            self.timers_enabled = bool(data[3] & 2)
+        elif len(data) == 4 and data.startswith(bytes.fromhex("030101")):
+            self.brightness = data[3]
+        elif len(data) == 5 and data.startswith(bytes.fromhex("050102")):
+            self.theme, self.mode = data[3], data[4]
+        elif len(data) == 15 and data.startswith(bytes.fromhex("04010c")):
+            self.timers = data[3:]
+        elif data == bytes.fromhex("07010702631200173b01"):
+            self.brightness, self.theme, self.mode = 99, 0x01, 0x80
+            self.timers = DEFAULT_TIMERS
+        else:
+            raise AssertionError(f"The controller does not know {data.hex()}")
 
     def notify(self, data: bytes) -> None:
         assert parse_notification(data) is not None

@@ -12,6 +12,7 @@ from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv, service
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.util import dt as dt_util
 
 from .const import ATTR_MODES, DOMAIN, IDLE_DISCONNECT_DELAY, MODES, SERVICE_SET_MODES
 from .coordinator import (
@@ -21,7 +22,12 @@ from .coordinator import (
 )
 from .device import ChristmasLights
 
-PLATFORMS: list[Platform] = [Platform.LIGHT]
+PLATFORMS: list[Platform] = [
+    Platform.BUTTON,
+    Platform.LIGHT,
+    Platform.SWITCH,
+    Platform.TIME,
+]
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -59,6 +65,8 @@ async def async_setup_entry(
     device = ChristmasLights(
         ble_device,
         idle_disconnect_delay=None if stay_connected(entry) else IDLE_DISCONNECT_DELAY,
+        # The controller runs its timers on the time it is given here.
+        now=dt_util.now,
     )
     coordinator = ChristmasLightsCoordinator(hass, entry, device)
 
