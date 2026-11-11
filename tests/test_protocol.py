@@ -73,12 +73,17 @@ def test_brightness_command_out_of_range(level):
         (Mode.FADE_AWAY_IN_PHASE, 0x04),
         (Mode.PHASING, 0x02),
         (Mode.WAVE, 0x01),
-        (ALL_MODES, 0x7F),
         (Mode.STAY_ON | Mode.WAVE, 0x41),
     ],
 )
 def test_mode_command(mode, byte):
     assert mode_command(mode) == bytes((0x05, 0x01, 0x02, 0x03, byte))
+
+
+def test_mode_command_all_modes_is_auto_rotate():
+    # What the app sends for "Auto Rotate", not a selection of all seven modes.
+    assert mode_command(ALL_MODES).hex() == "0501020180"
+    assert parse_notification(settings_report(99, 0x80, theme=0x01)).mode == ALL_MODES
 
 
 def test_mode_command_needs_a_mode():

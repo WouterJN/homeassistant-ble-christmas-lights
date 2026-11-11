@@ -44,6 +44,8 @@ ALL_MODES = Mode(0x7F)
 # ("Auto Rotate" in the app), or through the ones that are selected.
 _THEME_AUTO_ROTATE = 0x01
 _THEME_SELECTION = 0x03
+# The mode byte the app has when no selection was ever made.
+_MODE_AUTO_ROTATE = 0x80
 
 TIMER_COUNT = 3
 
@@ -129,10 +131,15 @@ def brightness_command(level: int) -> bytes:
 
 
 def mode_command(mode: Mode) -> bytes:
-    """Return the command that selects one or more modes."""
+    """Return the command that selects one or more modes.
+
+    All modes together is "Auto Rotate" in the app, which has its own theme.
+    """
     mode &= ALL_MODES
     if not mode:
         raise ValueError("At least one mode must be selected")
+    if mode == ALL_MODES:
+        return bytes((0x05, 0x01, 0x02, _THEME_AUTO_ROTATE, _MODE_AUTO_ROTATE))
     return bytes((0x05, 0x01, 0x02, _THEME_SELECTION, int(mode)))
 
 

@@ -25,6 +25,8 @@ bytes of the controller mean.
   name ends in `-00000000`.
 - Notifications from the controller are recognised by their length alone,
   like the app does.
+- The effect "All modes" is sent as the "Auto Rotate" of the app, instead of
+  as a selection of all seven modes.
 
 ### Fixed
 

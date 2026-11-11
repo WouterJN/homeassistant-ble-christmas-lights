@@ -212,7 +212,7 @@ async def test_all_modes_effect(hass, entry, ble_device, controller):
     assert state.attributes[ATTR_EFFECT] == "all_modes"
     assert len(state.attributes["modes"]) == 7
     await call(hass, "turn_on", effect="all_modes")
-    assert controller.written[-2].hex() == "050102037f"
+    assert controller.written[-2].hex() == "0501020180"
 
 
 async def test_set_modes_service(hass, entry, ble_device, controller):
