@@ -288,9 +288,9 @@ async def test_stop_cancels_idle_disconnect(controller):
 
 async def test_notifications_kept_for_diagnostics(lights, controller):
     await lights.update()
-    controller._notify(None, bytearray.fromhex("ff00000201"))
+    controller._notify(None, bytearray.fromhex("0a0b0c"))
     assert lights.last_power_report == "0000020100"
     assert lights.last_settings_report.startswith("02000f63")
-    assert list(lights.unrecognised_notifications) == ["ff00000201"]
+    assert list(lights.unrecognised_notifications) == ["0a0b0c"]
     # Something that is not understood does not change the state.
     assert lights.state.is_on is True

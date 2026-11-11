@@ -42,7 +42,7 @@ CMD_QUERY_POWER = bytes.fromhex("000003112611")
 CMD_QUERY_SETTINGS = bytes.fromhex("020000")
 
 _POWER_REPORT_LENGTH = 5
-_POWER_REPORT_PREFIX = b"\x00\x00\x02"
+_POWER_REPORT_MARKER = b"\x00\x00\x02"
 _SETTINGS_REPORT_LENGTH = 18
 _SETTINGS_REPORT_PREFIX = b"\x02\x00"
 
@@ -86,7 +86,7 @@ def mode_command(mode: Mode) -> bytes:
 
 def parse_notification(data: bytes) -> PowerReport | SettingsReport | None:
     """Decode a notification, or return None when it is not recognised."""
-    if len(data) == _POWER_REPORT_LENGTH and data.startswith(_POWER_REPORT_PREFIX):
+    if len(data) == _POWER_REPORT_LENGTH and _POWER_REPORT_MARKER in data:
         return PowerReport(is_on=data[3] == 0x01)
     if len(data) == _SETTINGS_REPORT_LENGTH and data.startswith(
         _SETTINGS_REPORT_PREFIX

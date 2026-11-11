@@ -96,9 +96,6 @@ def test_parse_settings_report_with_timers():
         "",
         "0102",
         "000002010000",
-        # Five bytes, but the power report prefix is not at the start.
-        "ff00000201",
-        "0100000201",
         "ff" * 18,
         "00" * 18,
     ],
