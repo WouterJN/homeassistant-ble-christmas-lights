@@ -1,0 +1,153 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "menu_options": {
+          "device": "Beleuchtung hinzufügen",
+          "group": "Eine Gruppe von Beleuchtungen erstellen"
+        }
+      },
+      "device": {
+        "description": "Wähle die Weihnachtsbeleuchtung, die du einrichten möchtest.",
+        "data": {
+          "address": "Gerät"
+        }
+      },
+      "group": {
+        "description": "Eine Gruppe hat eigene Einstellungen. Jede Änderung wird an alle Beleuchtungen der Gruppe gesendet, und Beleuchtungen, die sich verbinden, erhalten die Einstellungen der Gruppe. Eine Gruppe kann aus bis zu {max} Beleuchtungen bestehen.",
+        "data": {
+          "name": "Name",
+          "members": "Beleuchtungen"
+        }
+      },
+      "bluetooth_confirm": {
+        "description": "Möchtest du {name} einrichten? Stelle sicher, dass die Beleuchtung eingeschaltet und die Lights App auf deinem Telefon geschlossen ist."
+      },
+      "reconfigure": {
+        "description": "Ändere den Namen der Gruppe und die Beleuchtungen, die dazugehören. Die Gruppe behält ihre Einstellungen; neu hinzugefügte Beleuchtungen erhalten sie. Eine Gruppe kann aus bis zu {max} Beleuchtungen bestehen.",
+        "data": {
+          "name": "Name",
+          "members": "Beleuchtungen"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung fehlgeschlagen. Stelle sicher, dass die Beleuchtung in Reichweite und nicht mit deinem Telefon verbunden ist.",
+      "unknown": "Unerwarteter Fehler",
+      "no_members": "Wähle mindestens eine Beleuchtung.",
+      "too_many_members": "Eine Gruppe kann aus höchstens 4 Beleuchtungen bestehen."
+    },
+    "abort": {
+      "already_configured": "Gerät ist bereits konfiguriert",
+      "no_devices_found": "Keine Weihnachtsbeleuchtung in der Nähe gefunden",
+      "not_supported": "Dieses Gerät wird nicht unterstützt",
+      "reconfigure_successful": "Die Gruppe wurde geändert",
+      "reconfigure_lights": "Hier kann nur eine Gruppe geändert werden. Die Optionen einer Beleuchtung findest du unter Konfigurieren."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "stay_connected": "Verbunden bleiben"
+        },
+        "data_description": {
+          "stay_connected": "Die Bluetooth-Verbindung zur Beleuchtung offen halten. Schalte dies aus, um die Beleuchtung für die App auf dem Telefon frei zu lassen oder eine Verbindung auf einem Bluetooth-Proxy freizugeben. Home Assistant verbindet sich dann nur, um einen Befehl zu senden und alle 5 Minuten den Zustand auszulesen; Befehle dauern dadurch etwas länger."
+        }
+      }
+    }
+  },
+  "entity": {
+    "light": {
+      "christmas_lights": {
+        "state_attributes": {
+          "effect": {
+            "state": {
+              "stay_on": "Dauerlicht",
+              "fast_twinkling": "Schnelles Funkeln",
+              "fade_away": "Ausblenden",
+              "twinkling_in_phase": "Funkeln im Takt",
+              "fade_away_in_phase": "Ausblenden im Takt",
+              "phasing": "Phasenwechsel",
+              "wave": "Welle",
+              "all_modes": "Alle Modi"
+            }
+          },
+          "modes": {
+            "name": "Modi",
+            "state": {
+              "stay_on": "Dauerlicht",
+              "fast_twinkling": "Schnelles Funkeln",
+              "fade_away": "Ausblenden",
+              "twinkling_in_phase": "Funkeln im Takt",
+              "fade_away_in_phase": "Ausblenden im Takt",
+              "phasing": "Phasenwechsel",
+              "wave": "Welle"
+            }
+          }
+        }
+      }
+    },
+    "switch": {
+      "timer": {
+        "name": "Timer"
+      }
+    },
+    "time": {
+      "timer_start": {
+        "name": "Timer {number} Beginn"
+      },
+      "timer_end": {
+        "name": "Timer {number} Ende"
+      }
+    },
+    "button": {
+      "restore_defaults": {
+        "name": "Standardeinstellungen wiederherstellen"
+      },
+      "sync": {
+        "name": "Einstellungen an die Beleuchtungen senden"
+      }
+    }
+  },
+  "selector": {
+    "mode": {
+      "options": {
+        "stay_on": "Dauerlicht",
+        "fast_twinkling": "Schnelles Funkeln",
+        "fade_away": "Ausblenden",
+        "twinkling_in_phase": "Funkeln im Takt",
+        "fade_away_in_phase": "Ausblenden im Takt",
+        "phasing": "Phasenwechsel",
+        "wave": "Welle"
+      }
+    }
+  },
+  "services": {
+    "set_modes": {
+      "name": "Modi einstellen",
+      "description": "Lässt die Beleuchtung zwischen einem oder mehreren Modi wechseln, wie eine Mischung von Modi in der App auf dem Telefon.",
+      "fields": {
+        "modes": {
+          "name": "Modi",
+          "description": "Die Modi, zwischen denen gewechselt wird."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "device_not_found": {
+      "message": "Die Weihnachtsbeleuchtung mit der Adresse {address} wurde nicht gefunden"
+    },
+    "communication_error": {
+      "message": "Der Befehl konnte nicht an die Weihnachtsbeleuchtung gesendet werden: {error}"
+    },
+    "unknown_effect": {
+      "message": "{effect} ist kein Effekt der Weihnachtsbeleuchtung. Wähle einen von: {effects}"
+    },
+    "timers_unknown": {
+      "message": "Die Timer der Weihnachtsbeleuchtung wurden noch nicht ausgelesen"
+    }
+  }
+}

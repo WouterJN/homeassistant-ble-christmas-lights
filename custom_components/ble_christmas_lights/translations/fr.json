@@ -1,0 +1,153 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "menu_options": {
+          "device": "Ajouter des guirlandes",
+          "group": "Créer un groupe de guirlandes"
+        }
+      },
+      "device": {
+        "description": "Choisissez la guirlande de Noël à configurer.",
+        "data": {
+          "address": "Appareil"
+        }
+      },
+      "group": {
+        "description": "Un groupe a ses propres réglages. Chaque modification est envoyée à toutes les guirlandes du groupe, et les guirlandes qui se connectent reçoivent les réglages du groupe. Un groupe peut contenir jusqu'à {max} guirlandes.",
+        "data": {
+          "name": "Nom",
+          "members": "Guirlandes"
+        }
+      },
+      "bluetooth_confirm": {
+        "description": "Voulez-vous configurer {name} ? Vérifiez que la guirlande est allumée et que l'application Lights App est fermée sur votre téléphone."
+      },
+      "reconfigure": {
+        "description": "Modifiez le nom du groupe et les guirlandes qui en font partie. Le groupe conserve ses réglages ; les guirlandes ajoutées les reçoivent. Un groupe peut contenir jusqu'à {max} guirlandes.",
+        "data": {
+          "name": "Nom",
+          "members": "Guirlandes"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Connexion impossible. Vérifiez que la guirlande est à portée et qu'elle n'est pas connectée à votre téléphone.",
+      "unknown": "Erreur inattendue",
+      "no_members": "Choisissez au moins une guirlande.",
+      "too_many_members": "Un groupe peut contenir au maximum 4 guirlandes."
+    },
+    "abort": {
+      "already_configured": "L'appareil est déjà configuré",
+      "no_devices_found": "Aucune guirlande de Noël trouvée à proximité",
+      "not_supported": "Cet appareil n'est pas pris en charge",
+      "reconfigure_successful": "Le groupe a été modifié",
+      "reconfigure_lights": "Seul un groupe peut être modifié ici. Les options d'une guirlande se trouvent sous Configurer."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "stay_connected": "Rester connecté"
+        },
+        "data_description": {
+          "stay_connected": "Garder ouverte la connexion Bluetooth avec la guirlande. Désactivez cette option pour laisser la guirlande disponible pour l'application du téléphone, ou pour libérer une connexion sur un proxy Bluetooth. Home Assistant ne se connecte alors que pour envoyer une commande et pour lire l'état toutes les 5 minutes ; les commandes prennent donc un peu plus de temps."
+        }
+      }
+    }
+  },
+  "entity": {
+    "light": {
+      "christmas_lights": {
+        "state_attributes": {
+          "effect": {
+            "state": {
+              "stay_on": "Allumage fixe",
+              "fast_twinkling": "Scintillement rapide",
+              "fade_away": "Fondu",
+              "twinkling_in_phase": "Scintillement en phase",
+              "fade_away_in_phase": "Fondu en phase",
+              "phasing": "Alternance",
+              "wave": "Vague",
+              "all_modes": "Tous les modes"
+            }
+          },
+          "modes": {
+            "name": "Modes",
+            "state": {
+              "stay_on": "Allumage fixe",
+              "fast_twinkling": "Scintillement rapide",
+              "fade_away": "Fondu",
+              "twinkling_in_phase": "Scintillement en phase",
+              "fade_away_in_phase": "Fondu en phase",
+              "phasing": "Alternance",
+              "wave": "Vague"
+            }
+          }
+        }
+      }
+    },
+    "switch": {
+      "timer": {
+        "name": "Minuterie"
+      }
+    },
+    "time": {
+      "timer_start": {
+        "name": "Minuterie {number} début"
+      },
+      "timer_end": {
+        "name": "Minuterie {number} fin"
+      }
+    },
+    "button": {
+      "restore_defaults": {
+        "name": "Rétablir les réglages par défaut"
+      },
+      "sync": {
+        "name": "Envoyer les réglages aux guirlandes"
+      }
+    }
+  },
+  "selector": {
+    "mode": {
+      "options": {
+        "stay_on": "Allumage fixe",
+        "fast_twinkling": "Scintillement rapide",
+        "fade_away": "Fondu",
+        "twinkling_in_phase": "Scintillement en phase",
+        "fade_away_in_phase": "Fondu en phase",
+        "phasing": "Alternance",
+        "wave": "Vague"
+      }
+    }
+  },
+  "services": {
+    "set_modes": {
+      "name": "Définir les modes",
+      "description": "Fait alterner la guirlande entre un ou plusieurs modes, comme un mélange de modes dans l'application du téléphone.",
+      "fields": {
+        "modes": {
+          "name": "Modes",
+          "description": "Les modes à faire alterner."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "device_not_found": {
+      "message": "La guirlande de Noël avec l'adresse {address} est introuvable"
+    },
+    "communication_error": {
+      "message": "Impossible d'envoyer la commande à la guirlande de Noël : {error}"
+    },
+    "unknown_effect": {
+      "message": "{effect} n'est pas un effet de la guirlande de Noël. Choisissez parmi : {effects}"
+    },
+    "timers_unknown": {
+      "message": "Les minuteries de la guirlande de Noël n'ont pas encore été lues"
+    }
+  }
+}
