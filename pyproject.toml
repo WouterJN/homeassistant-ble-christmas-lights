@@ -13,3 +13,14 @@ force-sort-within-sections = true
 known-first-party = ["homeassistant"]
 known-local-folder = ["custom_components"]
 combine-as-imports = true
+
+[tool.mypy]
+python_version = "3.14"
+files = ["custom_components"]
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_return_any = true
+# Home Assistant is only followed for its types, not checked itself.
+follow_imports = "silent"
+ignore_missing_imports = true

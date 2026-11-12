@@ -4,3 +4,4 @@
 # it to test against a newer one.
 pytest-homeassistant-custom-component==0.13.375
 ruff
+mypy

@@ -204,15 +204,17 @@ def parse_notification(data: bytes) -> PowerReport | SettingsReport | None:
         return SettingsReport(
             brightness=data[3],
             mode=mode,
-            timers=tuple(
-                Timer(
-                    _time(data[offset], data[offset + 1]),
-                    _time(data[offset + 2], data[offset + 3]),
-                )
-                for offset in range(4, 16, 4)
-            ),
+            timers=(_timer(data, 4), _timer(data, 8), _timer(data, 12)),
         )
     return None
+
+
+def _timer(data: bytes, offset: int) -> Timer:
+    """Return the timer that starts at offset in a settings report."""
+    return Timer(
+        _time(data[offset], data[offset + 1]),
+        _time(data[offset + 2], data[offset + 3]),
+    )
 
 
 def _time(hour: int, minute: int) -> time:

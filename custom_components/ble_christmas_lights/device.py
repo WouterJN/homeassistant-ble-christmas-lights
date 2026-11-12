@@ -8,6 +8,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, replace
 from datetime import datetime
 import logging
+from typing import Any
 
 from bleak.backends.characteristic import BleakGATTCharacteristic
 from bleak.backends.device import BLEDevice
@@ -181,7 +182,7 @@ class ChristmasLights:
             timers_enabled = self._timers_enabled
 
         async def turn_on() -> None:
-            changes: dict[str, bool | int | Mode | Timers] = {}
+            changes: dict[str, Any] = {}
             try:
                 if brightness is not None:
                     await self._write(brightness_command(brightness))
@@ -337,6 +338,7 @@ class ChristmasLights:
     async def _write(self, command: bytes) -> None:
         """Send a command, connecting first when needed."""
         client = await self._ensure_connected()
+        assert self._write_char is not None
         _LOGGER.debug("%s: sending %s", self.address, command.hex())
         await client.write_gatt_char(self._write_char, command, response=True)
 
@@ -461,7 +463,7 @@ class ChristmasLights:
         """Whether the timers are enabled, to keep that when switching the lights."""
         return bool(self.state.timers_enabled)
 
-    def _set_state(self, **changes: bool | int | Mode | Timers) -> None:
+    def _set_state(self, **changes: Any) -> None:
         """Update the state and tell the listeners when it changed."""
         state = replace(self.state, **changes)
         if state == self.state:

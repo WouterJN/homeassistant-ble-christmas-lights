@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant
 
 from .const import CONF_MEMBERS, CONF_SETTINGS, MODES
 from .coordinator import ChristmasLightsConfigEntry
-from .group import is_group
+from .group import ChristmasLightsGroupCoordinator
 
 
 async def async_get_config_entry_diagnostics(
@@ -21,7 +21,7 @@ async def async_get_config_entry_diagnostics(
     add support for a controller that behaves differently.
     """
     coordinator = entry.runtime_data
-    if is_group(entry):
+    if isinstance(coordinator, ChristmasLightsGroupCoordinator):
         return {
             "group": {
                 "members": len(entry.data[CONF_MEMBERS]),

@@ -63,7 +63,8 @@ class ChristmasLightsTimerTime(ChristmasLightsEntity, TimeEntity):
         """Return the start or end of the timer."""
         if (timers := self.coordinator.data.timers) is None:
             return None
-        return getattr(timers[self._index], self._field)
+        timer = timers[self._index]
+        return timer.start if self._field == "start" else timer.end
 
     @override
     async def async_set_value(self, value: time) -> None:

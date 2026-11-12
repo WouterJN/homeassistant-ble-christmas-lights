@@ -145,21 +145,26 @@ class ChristmasLightsGroupCoordinator(DataUpdateCoordinator[DeviceState]):
             self.hass, self._async_sync(device), name=f"{self.name} sync"
         )
 
-    async def _async_sync(self, device: ChristmasLights) -> None:
+    async def async_apply_to(self, device: ChristmasLights) -> None:
+        """Give lights all settings of the group at once."""
         settings = self.data
+        # A group always has all its settings; see settings_from_dict().
         assert settings.is_on is not None
         assert settings.timers_enabled is not None
         assert settings.brightness is not None
         assert settings.mode is not None
         assert settings.timers is not None
+        await device.apply_settings(
+            is_on=settings.is_on,
+            timers_enabled=settings.timers_enabled,
+            brightness=settings.brightness,
+            mode=settings.mode,
+            timers=settings.timers,
+        )
+
+    async def _async_sync(self, device: ChristmasLights) -> None:
         try:
-            await device.apply_settings(
-                is_on=settings.is_on,
-                timers_enabled=settings.timers_enabled,
-                brightness=settings.brightness,
-                mode=settings.mode,
-                timers=settings.timers,
-            )
+            await self.async_apply_to(device)
         except BLEAK_EXCEPTIONS as err:
             _LOGGER.debug(
                 "%s: could not give %s the settings of the group: %r",
@@ -237,19 +242,7 @@ class GroupLights:
 
     async def sync(self) -> None:
         """Give all lights of the group its settings again, in one command each."""
-        settings = self._group.data
-        assert settings.is_on is not None
-        assert settings.timers_enabled is not None
-        assert settings.brightness is not None
-        assert settings.mode is not None
-        assert settings.timers is not None
-        is_on, timers_enabled = settings.is_on, settings.timers_enabled
-        brightness, mode, timers = settings.brightness, settings.mode, settings.timers
-        await self._send(
-            lambda device: device.apply_settings(
-                is_on, timers_enabled, brightness, mode, timers
-            )
-        )
+        await self._send(self._group.async_apply_to)
 
     async def stop(self) -> None:
         """Nothing to close: the connections belong to the lights themselves."""

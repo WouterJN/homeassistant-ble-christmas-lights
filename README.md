@@ -245,6 +245,7 @@ source .venv/bin/activate
 scripts/setup
 pytest
 ruff check . && ruff format --check .
+mypy
 ```
 
 `requirements-dev.txt` pins the test framework, and with it the Home Assistant

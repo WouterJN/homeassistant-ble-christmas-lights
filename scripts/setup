@@ -8,7 +8,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 if [[ "${1:-}" == "--latest" ]]; then
-  python -m pip install --upgrade pytest-homeassistant-custom-component ruff
+  python -m pip install --upgrade pytest-homeassistant-custom-component ruff mypy
 else
   python -m pip install -r requirements-dev.txt
 fi

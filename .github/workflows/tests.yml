@@ -25,6 +25,7 @@ jobs:
       - run: scripts/setup
       - run: ruff check .
       - run: ruff format --check .
+      - run: mypy
       - run: >-
           pytest tests -q
           --cov=custom_components/ble_christmas_lights
