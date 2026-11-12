@@ -105,6 +105,9 @@
     "button": {
       "restore_defaults": {
         "name": "Standaardinstellingen herstellen"
+      },
+      "sync": {
+        "name": "Instellingen naar de verlichting sturen"
       }
     }
   },

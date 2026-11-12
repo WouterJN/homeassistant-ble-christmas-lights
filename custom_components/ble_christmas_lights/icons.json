@@ -27,6 +27,9 @@
     "button": {
       "restore_defaults": {
         "default": "mdi:restore"
+      },
+      "sync": {
+        "default": "mdi:sync"
       }
     }
   },
