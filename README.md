@@ -229,13 +229,64 @@ Assistant while the phone app is connected.
       custom_components.ble_christmas_lights: debug
   ```
 
-## Moving from the "Lights App" integration
+## Compared with the "Lights App" integration
 
-This integration replaces the `lights_app` custom integration. The two are not
-compatible: remove the old integration (and its HACS repository), install this
-one and set up your lights again. The seven mode switches from the old
-integration are now effects of the light, so update automations and scenes
-that used them.
+This integration started as a replacement for the
+[Lights App integration](https://github.com/JurajNyiri/HomeAssistant-Lights-App)
+(`lights_app`) by Juraj Nyíri, which was the first to make these lights work
+in Home Assistant and worked out the basics of the Bluetooth protocol. This
+one is written from scratch, and checked against the Lights App itself.
+
+The comparison is with that integration as it was in October 2026 (commit
+`1174b90`).
+
+### What you gain
+
+| | Lights App integration | This integration |
+| --- | --- | --- |
+| Light modes | Seven separate switches | Effects of the light, plus an action for a mix of modes |
+| Timers | Not available | Timer switch and three timers |
+| Groups | Not available | Groups of up to four sets of lights, as in the app |
+| Restore default settings | Not available | A button |
+| Using the phone app as well | Not possible while connected | The **Stay connected** option |
+| Names | Every set is called "Lights App" | Every set has its own name |
+| Languages | English | English and Dutch |
+| Diagnostics | Not available | A download to attach to an issue |
+| Tests | None | An automated test suite, run on every change |
+
+### Problems of the Lights App integration that are solved here
+
+Wrong on the lights themselves:
+
+- **Timers run at the wrong time.** Every time it reads the state, it sets
+  the clock of the lights to 17:38:17. A timer you set in the phone app then
+  no longer follows the real time.
+- **Switching on or off turns the timers off.** The command it sends always
+  disables the timers of the lights.
+- **Lights that are on with their timers enabled show as off.**
+- **"Auto Rotate" is not understood.** After choosing it in the phone app,
+  the mode switches keep showing the modes that were selected before.
+- **Only names ending in `-00000000` are accepted.** The phone app accepts
+  any name that starts with `LED-`.
+
+Wrong in Home Assistant:
+
+- **A command that fails looks like it worked.** Errors while sending are
+  only written to the log; the action itself reports no error.
+- **The whole integration reloads after every lost connection**, instead of
+  just reconnecting to the lights.
+- **The lowest brightness shows as 0** while the lights are on.
+- **Adding lights that cannot be reached gives an unexpected error**: the
+  setup connects without handling a failure.
+- **The links in Home Assistant to its documentation and issues are broken**:
+  they point to `HomeAssistant-Light-App`, without the "s".
+
+### Moving over
+
+The two are not compatible: remove the old integration (and its HACS
+repository), install this one and set up your lights again. The seven mode
+switches are now effects of the light, so update automations and scenes that
+used them.
 
 ## Development
 
@@ -264,7 +315,8 @@ The Bluetooth protocol is described in [docs/PROTOCOL.md](docs/PROTOCOL.md).
 The Bluetooth protocol was first worked out by
 [Juraj Nyíri](https://github.com/JurajNyiri) and contributors in
 [HomeAssistant-Lights-App](https://github.com/JurajNyiri/HomeAssistant-Lights-App).
-This project is a new implementation, written from scratch.
+This project is a new implementation, written from scratch, with the meaning
+of the commands taken from the Lights App itself.
 
 ## License
 
