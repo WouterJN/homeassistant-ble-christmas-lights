@@ -39,6 +39,11 @@ Per set of lights:
 - A **Restore default settings** button: full brightness, cycling through all
   modes, and one timer from 18:00 to 23:59.
 
+Several sets of lights can be put in a **group**, which is a light of its own
+with the same switch, timers and buttons; see [Groups](#groups).
+
+Home Assistant shows all of this in English, Dutch, German or French.
+
 | Effect | Dutch name in Home Assistant |
 | --- | --- |
 | Stay on | Continu aan |
@@ -250,7 +255,7 @@ The comparison is with that integration as it was in October 2026 (commit
 | Restore default settings | Not available | A button |
 | Using the phone app as well | Not possible while connected | The **Stay connected** option |
 | Names | Every set is called "Lights App" | Every set has its own name |
-| Languages | English | English and Dutch |
+| Languages | English | English, Dutch, German and French |
 | Diagnostics | Not available | A download to attach to an issue |
 | Tests | None | An automated test suite, run on every change |
 

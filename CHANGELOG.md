@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow
 [Semantic Versioning](https://semver.org/): while the version starts
 with `0.`, any release may still contain breaking changes.
 
+## [0.4.1] - 2026-11-12
+
+- German and French translations.
+
 ## [0.4.0] - 2026-11-12
 
 Compared with the Lights App itself (version 2.2), which showed what the
