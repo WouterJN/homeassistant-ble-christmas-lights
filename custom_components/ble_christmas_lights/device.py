@@ -34,6 +34,7 @@ from .protocol import (
     parse_notification,
     power_command,
     power_query,
+    settings_command,
     timers_command,
 )
 
@@ -99,6 +100,7 @@ class ChristmasLights:
         self._idle_timer: asyncio.TimerHandle | None = None
         self._idle_task: asyncio.Task[None] | None = None
         self._state_callbacks: list[Callable[[DeviceState], None]] = []
+        self._connect_callbacks: list[Callable[[], None]] = []
         self._disconnect_callbacks: list[Callable[[], None]] = []
         self.state = DeviceState()
         # Raw notifications as hex, for diagnostics.
@@ -137,6 +139,18 @@ class ChristmasLights:
         self._state_callbacks.append(callback)
         return lambda: self._state_callbacks.remove(callback)
 
+    def register_connect_callback(
+        self, callback: Callable[[], None]
+    ) -> Callable[[], None]:
+        """Call callback after every new connection; returns an unsubscribe.
+
+        The command or state query that made the connection is still running
+        then, so anything the callback sends has to wait for it: start it as
+        a task instead of waiting for it in the callback.
+        """
+        self._connect_callbacks.append(callback)
+        return lambda: self._connect_callbacks.remove(callback)
+
     def register_disconnect_callback(
         self, callback: Callable[[], None]
     ) -> Callable[[], None]:
@@ -153,12 +167,21 @@ class ChristmasLights:
         return await self._run(self._query)
 
     async def turn_on(
-        self, brightness: int | None = None, mode: Mode | None = None
+        self,
+        brightness: int | None = None,
+        mode: Mode | None = None,
+        timers_enabled: bool | None = None,
     ) -> None:
-        """Turn the lights on, optionally with a new brightness and mode."""
+        """Turn the lights on, optionally with a new brightness and mode.
+
+        The timers stay enabled or disabled as they are, unless
+        timers_enabled says otherwise.
+        """
+        if timers_enabled is None:
+            timers_enabled = self._timers_enabled
 
         async def turn_on() -> None:
-            changes: dict[str, bool | int | Mode] = {}
+            changes: dict[str, bool | int | Mode | Timers] = {}
             try:
                 if brightness is not None:
                     await self._write(brightness_command(brightness))
@@ -166,29 +189,39 @@ class ChristmasLights:
                 if mode is not None:
                     await self._write(mode_command(mode))
                     changes["mode"] = mode & ALL_MODES
-                await self._write(power_command(True, self._timers_enabled))
+                await self._write(power_command(True, timers_enabled))
                 changes["is_on"] = True
+                changes["timers_enabled"] = timers_enabled
             finally:
                 # Report what did reach the controller as one change.
                 self._set_state(**changes)
 
         await self._run(turn_on)
 
-    async def turn_off(self) -> None:
-        """Turn the lights off."""
+    async def turn_off(self, timers_enabled: bool | None = None) -> None:
+        """Turn the lights off; see turn_on() for timers_enabled."""
+        if timers_enabled is None:
+            timers_enabled = self._timers_enabled
 
         async def turn_off() -> None:
-            await self._write(power_command(False, self._timers_enabled))
-            self._set_state(is_on=False)
+            await self._write(power_command(False, timers_enabled))
+            self._set_state(is_on=False, timers_enabled=timers_enabled)
 
         await self._run(turn_off)
 
-    async def set_timers_enabled(self, enabled: bool) -> None:
-        """Let the timers decide when the lights are lit, or stop that."""
+    async def set_timers_enabled(
+        self, enabled: bool, is_on: bool | None = None
+    ) -> None:
+        """Let the timers decide when the lights are lit, or stop that.
+
+        The lights stay on or off as they are, unless is_on says otherwise.
+        """
+        if is_on is None:
+            is_on = bool(self.state.is_on)
 
         async def set_timers_enabled() -> None:
-            await self._write(power_command(bool(self.state.is_on), enabled))
-            self._set_state(timers_enabled=enabled)
+            await self._write(power_command(is_on, enabled))
+            self._set_state(is_on=is_on, timers_enabled=enabled)
 
         await self._run(set_timers_enabled)
 
@@ -200,6 +233,24 @@ class ChristmasLights:
             self._set_state(timers=timers)
 
         await self._run(set_timers)
+
+    async def apply_settings(
+        self,
+        is_on: bool,
+        timers_enabled: bool,
+        brightness: int,
+        mode: Mode,
+        timers: Timers,
+    ) -> None:
+        """Set everything at once, as the app does for the lights in a group."""
+
+        async def apply_settings() -> None:
+            await self._write(settings_command(brightness, mode, timers))
+            self._set_state(brightness=brightness, mode=mode & ALL_MODES, timers=timers)
+            await self._write(power_command(is_on, timers_enabled))
+            self._set_state(is_on=is_on, timers_enabled=timers_enabled)
+
+        await self._run(apply_settings)
 
     async def restore_defaults(self) -> None:
         """Put the brightness, modes and timers back to the factory settings.
@@ -321,6 +372,8 @@ class ChristmasLights:
         self._client = client
         self._write_char = write_char
         _LOGGER.debug("%s: connected", self.address)
+        for callback in list(self._connect_callbacks):
+            callback()
         return client
 
     async def _disconnect(self) -> None:

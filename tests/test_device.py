@@ -86,7 +86,7 @@ async def test_turn_on_sends_brightness_and_mode_before_power(lights, controller
         "0501020301",
         "01010101",
     ]
-    assert lights.state == DeviceState(True, 50, Mode.WAVE)
+    assert lights.state == DeviceState(True, 50, Mode.WAVE, timers_enabled=False)
 
 
 async def test_turn_on_is_one_state_change(lights, controller):
@@ -411,3 +411,62 @@ async def test_auto_rotate_is_all_modes(lights, controller):
 
 async def test_name(lights):
     assert lights.name == NAME
+
+
+async def test_apply_settings(lights, controller):
+    await lights.update()
+    controller.written.clear()
+    timers = (Timer(time(18, 0), time(23, 59)), UNSET, UNSET)
+    states = []
+    lights.register_callback(states.append)
+
+    await lights.apply_settings(
+        is_on=False,
+        timers_enabled=True,
+        brightness=42,
+        mode=Mode.STAY_ON | Mode.WAVE,
+        timers=timers,
+    )
+    # Everything in one command, then the power as the app does.
+    assert [c.hex() for c in controller.written] == [
+        "08010f" + "2a" + "1200173b" + "00" * 8 + "0341",
+        "01010102",
+    ]
+    expected = DeviceState(False, 42, Mode.STAY_ON | Mode.WAVE, True, timers)
+    assert lights.state == expected
+    assert states[-1] == expected
+    # The controller agrees when asked.
+    assert await lights.update() == expected
+
+
+async def test_apply_settings_auto_rotate(lights, controller):
+    await lights.apply_settings(True, False, 99, ALL_MODES, NO_TIMERS)
+    assert controller.written[0].hex() == "08010f63" + "00" * 12 + "0180"
+
+
+async def test_connect_callback(lights, controller):
+    connects = []
+    unsubscribe = lights.register_connect_callback(lambda: connects.append(True))
+    await lights.update()
+    await lights.turn_off()
+    assert connects == [True]
+    controller.drop_connection()
+    await lights.update()
+    assert connects == [True, True]
+    unsubscribe()
+    controller.drop_connection()
+    await lights.update()
+    assert connects == [True, True]
+
+
+async def test_power_commands_can_set_the_other_half(lights, controller):
+    await lights.update()
+    await lights.turn_on(timers_enabled=True)
+    assert controller.written[-1].hex() == "01010103"
+    assert lights.state.timers_enabled is True
+    await lights.turn_off(timers_enabled=False)
+    assert controller.written[-1].hex() == "01010100"
+    assert lights.state.timers_enabled is False
+    await lights.set_timers_enabled(True, is_on=True)
+    assert controller.written[-1].hex() == "01010103"
+    assert lights.state.is_on is True

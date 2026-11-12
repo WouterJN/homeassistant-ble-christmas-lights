@@ -16,6 +16,10 @@ bytes of the controller mean.
 - Start and end time of the three timers. The second and third timer are
   disabled by default.
 - **Restore default settings** button.
+- Groups of up to four sets of lights, as in the app. A group has its own
+  light, Timer switch, timers and Restore default settings button; changes go
+  to all its lights, and lights that connect are given the settings of the
+  group.
 - The device page shows which kind of lights it is, such as `LED-4-02`.
 
 ### Changed

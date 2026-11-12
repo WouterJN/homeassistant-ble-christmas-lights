@@ -20,6 +20,7 @@ from custom_components.ble_christmas_lights.protocol import (
     parse_notification,
     power_command,
     power_query,
+    settings_command,
     timers_command,
 )
 
@@ -96,6 +97,36 @@ def test_timers_command():
     assert (
         timers_command(timers).hex() == "04010c" + "10001700" + "060f073b" + "00000000"
     )
+
+
+def test_settings_command():
+    timers = (Timer(time(16, 0), time(23, 0)), Timer(time(6, 15), time(7, 59)), UNSET)
+    assert (
+        settings_command(55, Mode.STAY_ON, timers).hex()
+        == "08010f" + "37" + "10001700" + "060f073b" + "00000000" + "0340"
+    )
+    # All modes is "Auto Rotate", as in mode_command().
+    assert settings_command(99, ALL_MODES, timers).hex().endswith("0180")
+
+
+def test_settings_command_is_what_the_settings_report_holds():
+    timers = (Timer(time(16, 0), time(23, 0)), UNSET, UNSET)
+    command = settings_command(55, Mode.WAVE | Mode.PHASING, timers)
+    report = parse_notification(bytes.fromhex("02000f") + command[3:])
+    assert report == SettingsReport(55, Mode.WAVE | Mode.PHASING, timers)
+
+
+@pytest.mark.parametrize("brightness", [9, 100])
+def test_settings_command_brightness_out_of_range(brightness):
+    with pytest.raises(ValueError):
+        settings_command(brightness, Mode.WAVE, (UNSET, UNSET, UNSET))
+
+
+def test_settings_command_needs_a_mode_and_three_timers():
+    with pytest.raises(ValueError):
+        settings_command(99, Mode(0), (UNSET, UNSET, UNSET))
+    with pytest.raises(ValueError):
+        settings_command(99, Mode.WAVE, (UNSET,))
 
 
 def test_timers_command_needs_three_timers():

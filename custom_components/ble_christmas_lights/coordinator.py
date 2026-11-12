@@ -8,6 +8,7 @@ from typing import override
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
+from homeassistant.helpers.device_registry import CONNECTION_BLUETOOTH, DeviceInfo
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -16,12 +17,15 @@ from .const import (
     DEFAULT_STAY_CONNECTED,
     IDLE_UPDATE_INTERVAL,
     RECONNECT_GRACE,
+    SUPPORTED_NAME,
     UPDATE_INTERVAL,
 )
 from .device import BLEAK_EXCEPTIONS, ChristmasLights, DeviceState
 
 _LOGGER = logging.getLogger(__name__)
 
+# The config entry of a set of lights. A group has a config entry too, with a
+# ChristmasLightsGroupCoordinator; the platforms treat both alike.
 type ChristmasLightsConfigEntry = ConfigEntry[ChristmasLightsCoordinator]
 
 
@@ -57,12 +61,26 @@ class ChristmasLightsCoordinator(DataUpdateCoordinator[DeviceState]):
             always_update=True,
         )
         self.device = device
+        self.unique_id = device.address
+        # The start of the advertised name says which kind of lights it is.
+        kind = SUPPORTED_NAME.fullmatch(device.name or "")
+        self.device_info = DeviceInfo(
+            connections={(CONNECTION_BLUETOOTH, device.address)},
+            name=entry.title,
+            model="Lights App controller",
+            model_id=kind and kind.group(1),
+        )
         # Set when reconnecting takes longer than RECONNECT_GRACE.
         self.reconnect_overdue = False
         self._cancel_grace: CALLBACK_TYPE | None = None
         entry.async_on_unload(self._async_end_grace)
         entry.async_on_unload(device.register_callback(self.async_set_updated_data))
         entry.async_on_unload(device.register_disconnect_callback(self.async_reconnect))
+
+    @property
+    def reachable(self) -> bool:
+        """Whether the lights are not taking too long to reconnect."""
+        return not self.reconnect_overdue
 
     @override
     async def _async_update_data(self) -> DeviceState:

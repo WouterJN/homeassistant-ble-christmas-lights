@@ -18,12 +18,25 @@ from homeassistant.config_entries import (
     ConfigFlowResult,
     OptionsFlowWithReload,
 )
-from homeassistant.const import CONF_ADDRESS
+from homeassistant.const import CONF_ADDRESS, CONF_NAME
 from homeassistant.core import callback
+from homeassistant.helpers.selector import (
+    SelectOptionDict,
+    SelectSelector,
+    SelectSelectorConfig,
+)
 from homeassistant.util import dt as dt_util
 
-from .const import CONF_STAY_CONNECTED, DEFAULT_STAY_CONNECTED, DOMAIN, SUPPORTED_NAME
+from .const import (
+    CONF_MEMBERS,
+    CONF_STAY_CONNECTED,
+    DEFAULT_STAY_CONNECTED,
+    DOMAIN,
+    MAX_GROUP_MEMBERS,
+    SUPPORTED_NAME,
+)
 from .device import BLEAK_EXCEPTIONS, CharacteristicMissingError, ChristmasLights
+from .group import is_group
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -50,6 +63,13 @@ class ChristmasLightsConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ChristmasLightsOptionsFlow:
         """Return the options flow."""
         return ChristmasLightsOptionsFlow()
+
+    @classmethod
+    @callback
+    @override
+    def async_supports_options_flow(cls, config_entry: ConfigEntry) -> bool:
+        """Only a set of lights has options; a group has no connection."""
+        return not is_group(config_entry)
 
     def __init__(self) -> None:
         """Initialize the config flow."""
@@ -97,6 +117,62 @@ class ChristmasLightsConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
+        """Add lights, or a group once there are lights to put in it."""
+        if not self._lights():
+            return await self.async_step_device()
+        return self.async_show_menu(step_id="user", menu_options=["device", "group"])
+
+    def _lights(self) -> dict[str, str]:
+        """Return the title of every set of lights, by address."""
+        return {
+            entry.unique_id: entry.title
+            for entry in self._async_current_entries(include_ignore=False)
+            if not is_group(entry) and entry.unique_id
+        }
+
+    async def async_step_group(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Make a group of lights that are set up already."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            members = user_input[CONF_MEMBERS]
+            if not members:
+                errors[CONF_MEMBERS] = "no_members"
+            elif len(members) > MAX_GROUP_MEMBERS:
+                errors[CONF_MEMBERS] = "too_many_members"
+            else:
+                return self.async_create_entry(
+                    title=user_input[CONF_NAME], data={CONF_MEMBERS: members}
+                )
+
+        return self.async_show_form(
+            step_id="group",
+            data_schema=self.add_suggested_values_to_schema(
+                probatio.Schema(
+                    {
+                        probatio.Required(CONF_NAME): str,
+                        probatio.Required(CONF_MEMBERS): SelectSelector(
+                            SelectSelectorConfig(
+                                options=[
+                                    SelectOptionDict(value=address, label=title)
+                                    for address, title in self._lights().items()
+                                ],
+                                multiple=True,
+                            )
+                        ),
+                    }
+                ),
+                user_input,
+            ),
+            errors=errors,
+            description_placeholders={"max": str(MAX_GROUP_MEMBERS)},
+        )
+
+    async def async_step_device(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """Let the user pick one of the controllers in range."""
         errors: dict[str, str] = {}
 
@@ -123,7 +199,7 @@ class ChristmasLightsConfigFlow(ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="no_devices_found")
 
         return self.async_show_form(
-            step_id="user",
+            step_id="device",
             data_schema=probatio.Schema(
                 {
                     probatio.Required(CONF_ADDRESS): probatio.In(

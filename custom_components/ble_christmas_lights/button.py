@@ -11,6 +11,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .coordinator import ChristmasLightsConfigEntry, ChristmasLightsCoordinator
 from .entity import ChristmasLightsEntity
+from .group import ChristmasLightsGroupCoordinator
 
 PARALLEL_UPDATES = 1
 
@@ -30,7 +31,9 @@ class ChristmasLightsRestoreDefaultsButton(ChristmasLightsEntity, ButtonEntity):
     _attr_translation_key = "restore_defaults"
     _attr_entity_category = EntityCategory.CONFIG
 
-    def __init__(self, coordinator: ChristmasLightsCoordinator) -> None:
+    def __init__(
+        self, coordinator: ChristmasLightsCoordinator | ChristmasLightsGroupCoordinator
+    ) -> None:
         """Initialize the button."""
         super().__init__(coordinator, "restore_defaults")
 

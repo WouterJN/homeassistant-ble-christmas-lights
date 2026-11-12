@@ -109,7 +109,7 @@ async def test_user_step(hass: HomeAssistant):
             DOMAIN, context={"source": SOURCE_USER}
         )
     assert result["type"] is FlowResultType.FORM
-    assert result["step_id"] == "user"
+    assert result["step_id"] == "device"
 
     with patch_update():
         result = await hass.config_entries.flow.async_configure(

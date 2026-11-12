@@ -10,6 +10,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .coordinator import ChristmasLightsConfigEntry, ChristmasLightsCoordinator
 from .entity import ChristmasLightsEntity
+from .group import ChristmasLightsGroupCoordinator
 
 PARALLEL_UPDATES = 1
 
@@ -28,7 +29,9 @@ class ChristmasLightsTimerSwitch(ChristmasLightsEntity, SwitchEntity):
 
     _attr_translation_key = "timer"
 
-    def __init__(self, coordinator: ChristmasLightsCoordinator) -> None:
+    def __init__(
+        self, coordinator: ChristmasLightsCoordinator | ChristmasLightsGroupCoordinator
+    ) -> None:
         """Initialize the switch."""
         super().__init__(coordinator, "timer")
 

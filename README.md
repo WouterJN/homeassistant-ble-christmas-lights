@@ -91,6 +91,28 @@ Home Assistant sets the clock of the controller to its own local time every
 time it reads the state, so the timers follow the time zone and the summer
 time of Home Assistant.
 
+## Groups
+
+Several sets of lights can be put in a group, as in the Lights App. Choose
+**Add integration → BLE Christmas Lights → Make a group of lights**, give the
+group a name and pick up to four sets of lights that are set up already.
+
+A group gets the same entities as a set of lights: a light, the Timer switch,
+the timers and the Restore default settings button. It works like a group in
+the app:
+
+- A group has its own settings. A new group starts on, at full brightness,
+  cycling through all modes, with one timer from 18:00 to 23:59.
+- Every change you make on the group is sent to all its lights.
+- Lights that connect are given the settings of the group, also when they
+  were changed on their own in the meantime. So a change made on one set of
+  lights lasts until those lights connect again; with **Stay connected**
+  turned off that is at most 5 minutes.
+- The group does not follow its lights: it shows its own settings, and it is
+  available as long as one of its lights can be reached.
+
+To change which lights are in a group, delete the group and make it again.
+
 ## Installation
 
 ### HACS (recommended)

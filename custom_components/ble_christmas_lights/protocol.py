@@ -135,24 +135,54 @@ def mode_command(mode: Mode) -> bytes:
 
     All modes together is "Auto Rotate" in the app, which has its own theme.
     """
+    return bytes((0x05, 0x01, 0x02, *_theme_and_mode(mode)))
+
+
+def _theme_and_mode(mode: Mode) -> tuple[int, int]:
+    """Return the mode theme and mode byte for one or more modes."""
     mode &= ALL_MODES
     if not mode:
         raise ValueError("At least one mode must be selected")
     if mode == ALL_MODES:
-        return bytes((0x05, 0x01, 0x02, _THEME_AUTO_ROTATE, _MODE_AUTO_ROTATE))
-    return bytes((0x05, 0x01, 0x02, _THEME_SELECTION, int(mode)))
+        return _THEME_AUTO_ROTATE, _MODE_AUTO_ROTATE
+    return _THEME_SELECTION, int(mode)
 
 
 def timers_command(timers: Timers) -> bytes:
     """Return the command that sets all three timers."""
+    return bytes((0x04, 0x01, 0x0C)) + _timer_bytes(timers)
+
+
+def settings_command(brightness: int, mode: Mode, timers: Timers) -> bytes:
+    """Return the command that sets the brightness, modes and timers at once.
+
+    The app sends this to every set of lights in a group when it connects.
+    """
+    if not BRIGHTNESS_MIN <= brightness <= BRIGHTNESS_MAX:
+        raise ValueError(
+            f"Brightness must be between {BRIGHTNESS_MIN} and {BRIGHTNESS_MAX}"
+        )
+    return (
+        bytes((0x08, 0x01, 0x0F, brightness))
+        + _timer_bytes(timers)
+        + bytes(_theme_and_mode(mode))
+    )
+
+
+def _timer_bytes(timers: Timers) -> bytes:
+    """Return the twelve bytes of the three timers."""
     if len(timers) != TIMER_COUNT:
         raise ValueError(f"There must be {TIMER_COUNT} timers")
-    data = bytearray((0x04, 0x01, 0x0C))
-    for timer in timers:
-        data += bytes(
-            (timer.start.hour, timer.start.minute, timer.end.hour, timer.end.minute)
+    return bytes(
+        value
+        for timer in timers
+        for value in (
+            timer.start.hour,
+            timer.start.minute,
+            timer.end.hour,
+            timer.end.minute,
         )
-    return bytes(data)
+    )
 
 
 def parse_notification(data: bytes) -> PowerReport | SettingsReport | None:

@@ -15,6 +15,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from .const import DOMAIN
 from .coordinator import ChristmasLightsConfigEntry, ChristmasLightsCoordinator
 from .entity import ChristmasLightsEntity
+from .group import ChristmasLightsGroupCoordinator
 from .protocol import TIMER_COUNT
 
 PARALLEL_UPDATES = 1
@@ -42,7 +43,10 @@ class ChristmasLightsTimerTime(ChristmasLightsEntity, TimeEntity):
     _attr_entity_category = EntityCategory.CONFIG
 
     def __init__(
-        self, coordinator: ChristmasLightsCoordinator, index: int, field: str
+        self,
+        coordinator: ChristmasLightsCoordinator | ChristmasLightsGroupCoordinator,
+        index: int,
+        field: str,
     ) -> None:
         """Initialize the time; index counts the timers from 0."""
         super().__init__(coordinator, f"timer_{index + 1}_{field}")

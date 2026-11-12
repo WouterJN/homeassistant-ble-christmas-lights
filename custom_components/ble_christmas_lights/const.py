@@ -31,6 +31,12 @@ RECONNECT_GRACE = 15
 IDLE_UPDATE_INTERVAL = timedelta(minutes=5)
 IDLE_DISCONNECT_DELAY = 10
 
+# A group has the addresses of its lights and its own settings; see group.py.
+CONF_MEMBERS = "members"
+CONF_SETTINGS = "settings"
+# The app allows this many sets of lights in a group.
+MAX_GROUP_MEMBERS = 4
+
 SERVICE_SET_MODES = "set_modes"
 ATTR_MODES = "modes"
 

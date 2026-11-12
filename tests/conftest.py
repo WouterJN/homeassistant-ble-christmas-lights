@@ -126,6 +126,9 @@ class FakeController:
             self.theme, self.mode = data[3], data[4]
         elif len(data) == 15 and data.startswith(bytes.fromhex("04010c")):
             self.timers = data[3:]
+        elif len(data) == 18 and data.startswith(bytes.fromhex("08010f")):
+            self.brightness, self.timers = data[3], data[4:16]
+            self.theme, self.mode = data[16], data[17]
         elif data == bytes.fromhex("07010702631200173b01"):
             self.brightness, self.theme, self.mode = 99, 0x01, 0x80
             self.timers = DEFAULT_TIMERS
@@ -148,13 +151,14 @@ class FakeController:
 
 
 @pytest.fixture
-def controller(monkeypatch):
-    """Patch establish_connection to return a FakeController."""
-    fake = FakeController()
+def controllers(monkeypatch):
+    """Patch establish_connection to return a FakeController per address."""
+    fakes: dict[str, FakeController] = {ADDRESS: FakeController()}
 
     async def establish_connection(
         client_class, device, name, disconnected_callback=None, **kwargs
     ):
+        fake = fakes.setdefault(device.address, FakeController())
         if fake.connect_error:
             raise fake.connect_error
         fake.connects += 1
@@ -166,4 +170,10 @@ def controller(monkeypatch):
         "custom_components.ble_christmas_lights.device.establish_connection",
         establish_connection,
     )
-    return fake
+    return fakes
+
+
+@pytest.fixture
+def controller(controllers):
+    """The controller of the lights most tests use."""
+    return controllers[ADDRESS]

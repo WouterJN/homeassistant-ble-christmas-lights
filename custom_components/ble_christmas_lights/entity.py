@@ -6,35 +6,33 @@ from collections.abc import Awaitable
 from typing import override
 
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.device_registry import CONNECTION_BLUETOOTH, DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, SUPPORTED_NAME
+from .const import DOMAIN
 from .coordinator import ChristmasLightsCoordinator
 from .device import BLEAK_EXCEPTIONS
+from .group import ChristmasLightsGroupCoordinator
 
 
-class ChristmasLightsEntity(CoordinatorEntity[ChristmasLightsCoordinator]):
-    """An entity of a set of Christmas lights."""
+class ChristmasLightsEntity(
+    CoordinatorEntity[ChristmasLightsCoordinator | ChristmasLightsGroupCoordinator]
+):
+    """An entity of a set of Christmas lights, or of a group of them."""
 
     _attr_has_entity_name = True
 
     def __init__(
-        self, coordinator: ChristmasLightsCoordinator, key: str | None = None
+        self,
+        coordinator: ChristmasLightsCoordinator | ChristmasLightsGroupCoordinator,
+        key: str | None = None,
     ) -> None:
         """Initialize the entity; key tells the entities of one set apart."""
         super().__init__(coordinator)
-        address = coordinator.device.address
-        # The light came first and has the address alone as its unique ID.
-        self._attr_unique_id = address if key is None else f"{address}_{key}"
-        # The start of the advertised name says which kind of lights it is.
-        kind = SUPPORTED_NAME.fullmatch(coordinator.device.name or "")
-        self._attr_device_info = DeviceInfo(
-            connections={(CONNECTION_BLUETOOTH, address)},
-            name=coordinator.config_entry.title,
-            model="Lights App controller",
-            model_id=kind and kind.group(1),
+        # The light came first and has the ID of the lights alone as unique ID.
+        self._attr_unique_id = (
+            coordinator.unique_id if key is None else f"{coordinator.unique_id}_{key}"
         )
+        self._attr_device_info = coordinator.device_info
 
     @property
     @override
@@ -42,7 +40,7 @@ class ChristmasLightsEntity(CoordinatorEntity[ChristmasLightsCoordinator]):
         """Available while the state is known and the lights can be reached."""
         return (
             super().available
-            and not self.coordinator.reconnect_overdue
+            and self.coordinator.reachable
             and self.coordinator.data.is_on is not None
         )
 

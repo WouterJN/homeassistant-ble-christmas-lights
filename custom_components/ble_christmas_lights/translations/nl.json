@@ -3,9 +3,22 @@
     "flow_title": "{name}",
     "step": {
       "user": {
+        "menu_options": {
+          "device": "Verlichting toevoegen",
+          "group": "Een groep van verlichting maken"
+        }
+      },
+      "device": {
         "description": "Kies de kerstverlichting die je wilt toevoegen.",
         "data": {
           "address": "Apparaat"
+        }
+      },
+      "group": {
+        "description": "Een groep heeft eigen instellingen. Elke wijziging gaat naar alle verlichting in de groep, en verlichting die verbinding maakt krijgt de instellingen van de groep. Een groep kan uit maximaal {max} sets verlichting bestaan.",
+        "data": {
+          "name": "Naam",
+          "members": "Verlichting"
         }
       },
       "bluetooth_confirm": {
@@ -14,7 +27,9 @@
     },
     "error": {
       "cannot_connect": "Kan geen verbinding maken. Zorg dat de verlichting binnen bereik is en niet met je telefoon verbonden is.",
-      "unknown": "Onverwachte fout"
+      "unknown": "Onverwachte fout",
+      "no_members": "Kies minstens één set verlichting.",
+      "too_many_members": "Een groep kan uit maximaal 4 sets verlichting bestaan."
     },
     "abort": {
       "already_configured": "Apparaat is al geconfigureerd",
