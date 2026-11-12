@@ -176,7 +176,15 @@ class ChristmasLightsConfigFlow(ConfigFlow, domain=DOMAIN):
         return self._async_show_group_form(
             "reconfigure",
             user_input
-            or {CONF_NAME: entry.title, CONF_MEMBERS: entry.data[CONF_MEMBERS]},
+            or {
+                CONF_NAME: entry.title,
+                # Lights that were removed since can no longer be chosen.
+                CONF_MEMBERS: [
+                    address
+                    for address in entry.data[CONF_MEMBERS]
+                    if address in self._lights()
+                ],
+            },
             errors,
         )
 

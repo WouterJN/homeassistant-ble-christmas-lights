@@ -28,6 +28,8 @@ bytes of the controller mean.
 - Controllers are recognised by the start of their name
   (`LED-<digit>-<two digits>`), like the app does, instead of only when the
   name ends in `-00000000`.
+- The integration is listed as polling the lights, which is what it does,
+  instead of as being pushed their state.
 - Notifications from the controller are recognised by their length alone,
   like the app does.
 - The effect "All modes" is sent as the "Auto Rotate" of the app, instead of

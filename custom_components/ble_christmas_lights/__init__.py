@@ -54,6 +54,7 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ChristmasLightsConfigEntry
 ) -> bool:
     """Set up a set of lights, or a group of them, from a config entry."""
+    group: ChristmasLightsGroupCoordinator
     if is_group(entry):
         group = ChristmasLightsGroupCoordinator(hass, entry)
         entry.runtime_data = group

@@ -21,28 +21,31 @@ from .const import (
     UPDATE_INTERVAL,
 )
 from .device import BLEAK_EXCEPTIONS, ChristmasLights, DeviceState
+from .group import ChristmasLightsGroupCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-# The config entry of a set of lights. A group has a config entry too, with a
-# ChristmasLightsGroupCoordinator; the platforms treat both alike.
-type ChristmasLightsConfigEntry = ConfigEntry[ChristmasLightsCoordinator]
+# A config entry is a set of lights or a group of them; the platforms treat
+# both alike.
+type ChristmasLightsConfigEntry = ConfigEntry[
+    ChristmasLightsCoordinator | ChristmasLightsGroupCoordinator
+]
 
 
-def stay_connected(entry: ChristmasLightsConfigEntry) -> bool:
+def stay_connected(entry: ConfigEntry) -> bool:
     """Return whether the connection to the lights is kept open."""
-    return entry.options.get(CONF_STAY_CONNECTED, DEFAULT_STAY_CONNECTED)
+    return bool(entry.options.get(CONF_STAY_CONNECTED, DEFAULT_STAY_CONNECTED))
 
 
 class ChristmasLightsCoordinator(DataUpdateCoordinator[DeviceState]):
     """Polls the controller and passes on the state it pushes."""
 
-    config_entry: ChristmasLightsConfigEntry
+    config_entry: ConfigEntry
 
     def __init__(
         self,
         hass: HomeAssistant,
-        entry: ChristmasLightsConfigEntry,
+        entry: ConfigEntry,
         device: ChristmasLights,
     ) -> None:
         """Initialize the coordinator."""
