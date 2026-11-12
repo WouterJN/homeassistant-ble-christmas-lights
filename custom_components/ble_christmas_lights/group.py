@@ -235,6 +235,22 @@ class GroupLights:
         for member in self._group.member_coordinators:
             await member.async_request_refresh()
 
+    async def sync(self) -> None:
+        """Give all lights of the group its settings again, in one command each."""
+        settings = self._group.data
+        assert settings.is_on is not None
+        assert settings.timers_enabled is not None
+        assert settings.brightness is not None
+        assert settings.mode is not None
+        assert settings.timers is not None
+        is_on, timers_enabled = settings.is_on, settings.timers_enabled
+        brightness, mode, timers = settings.brightness, settings.mode, settings.timers
+        await self._send(
+            lambda device: device.apply_settings(
+                is_on, timers_enabled, brightness, mode, timers
+            )
+        )
+
     async def stop(self) -> None:
         """Nothing to close: the connections belong to the lights themselves."""
 

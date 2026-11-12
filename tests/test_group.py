@@ -36,6 +36,7 @@ LIGHT = "light.tree"
 SWITCH = "switch.tree_timer"
 START_1 = "time.tree_timer_1_start"
 BUTTON = "button.tree_restore_default_settings"
+SYNC_BUTTON = "button.tree_send_settings_to_the_lights"
 MEMBER_1 = "light.christmas_lights_eeff"
 MEMBER_2 = "light.christmas_lights_5566"
 
@@ -113,6 +114,7 @@ async def test_setup(hass, group, controller, second):
     )
     assert entities == [
         BUTTON,
+        SYNC_BUTTON,
         LIGHT,
         SWITCH,
         "time.tree_timer_1_end",
@@ -434,3 +436,32 @@ async def test_lights_cannot_be_reconfigured(hass, group):
     result = await lights.start_reconfigure_flow(hass)
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "reconfigure_lights"
+
+
+async def test_send_settings_to_the_lights(hass, group, controller, second):
+    await call(hass, "light", "turn_on", LIGHT, effect="phasing")
+    # Changed on the lights themselves, without the connection being lost.
+    await call(hass, "light", "turn_on", MEMBER_1, effect="stay_on")
+    for fake in (controller, second):
+        fake.written.clear()
+
+    await call(hass, "button", "press", SYNC_BUTTON)
+    for fake in (controller, second):
+        assert written(fake) == [
+            "08010f63" + "1200173b" + "00" * 8 + "0302",
+            "01010101",
+        ]
+    assert hass.states.get(MEMBER_1).attributes["effect"] == "phasing"
+
+    for fake in (controller, second):
+        fake.failing_writes = 100
+    with pytest.raises(HomeAssistantError):
+        await call(hass, "button", "press", SYNC_BUTTON)
+
+
+async def test_lights_have_no_sync_button(hass, group):
+    assert hass.states.get("button.christmas_lights_eeff_restore_default_settings")
+    assert (
+        hass.states.get("button.christmas_lights_eeff_send_settings_to_the_lights")
+        is None
+    )

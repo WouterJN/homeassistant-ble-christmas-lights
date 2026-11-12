@@ -22,7 +22,11 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the button."""
-    async_add_entities([ChristmasLightsRestoreDefaultsButton(entry.runtime_data)])
+    coordinator = entry.runtime_data
+    entities: list[ButtonEntity] = [ChristmasLightsRestoreDefaultsButton(coordinator)]
+    if isinstance(coordinator, ChristmasLightsGroupCoordinator):
+        entities.append(ChristmasLightsGroupSyncButton(coordinator))
+    async_add_entities(entities)
 
 
 class ChristmasLightsRestoreDefaultsButton(ChristmasLightsEntity, ButtonEntity):
@@ -42,3 +46,19 @@ class ChristmasLightsRestoreDefaultsButton(ChristmasLightsEntity, ButtonEntity):
         """Restore the default settings and read what they are."""
         await self._async_call(self.coordinator.device.restore_defaults())
         await self.coordinator.async_request_refresh()
+
+
+class ChristmasLightsGroupSyncButton(ChristmasLightsEntity, ButtonEntity):
+    """Gives all lights of a group the settings of the group again."""
+
+    _attr_translation_key = "sync"
+
+    def __init__(self, coordinator: ChristmasLightsGroupCoordinator) -> None:
+        """Initialize the button."""
+        super().__init__(coordinator, "sync")
+        self._group = coordinator
+
+    @override
+    async def async_press(self) -> None:
+        """Send the settings of the group to its lights."""
+        await self._async_call(self._group.device.sync())

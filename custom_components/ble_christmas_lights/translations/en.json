@@ -105,6 +105,9 @@
     "button": {
       "restore_defaults": {
         "name": "Restore default settings"
+      },
+      "sync": {
+        "name": "Send settings to the lights"
       }
     }
   },

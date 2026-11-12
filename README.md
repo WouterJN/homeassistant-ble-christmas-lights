@@ -93,28 +93,80 @@ time of Home Assistant.
 
 ## Groups
 
-Several sets of lights can be put in a group, as in the Lights App. Choose
-**Add integration → BLE Christmas Lights → Make a group of lights**, give the
-group a name and pick up to four sets of lights that are set up already.
+Several sets of lights can be put in a group, as in the Lights App: the
+lights in the tree and the ones on the fence, for instance, that should
+always look the same.
 
-A group gets the same entities as a set of lights: a light, the Timer switch,
-the timers and the Restore default settings button. It works like a group in
-the app:
+### How a group works
 
-- A group has its own settings. A new group starts on, at full brightness,
-  cycling through all modes, with one timer from 18:00 to 23:59.
-- Every change you make on the group is sent to all its lights.
-- Lights that connect are given the settings of the group, also when they
-  were changed on their own in the meantime. So a change made on one set of
-  lights lasts until those lights connect again; with **Stay connected**
-  turned off that is at most 5 minutes.
-- The group does not follow its lights: it shows its own settings, and it is
-  available as long as one of its lights can be reached.
+A group is a device in Home Assistant with the same entities as a set of
+lights: a light, the Timer switch, the timers and the Restore default
+settings button. It also has a **Send settings to the lights** button.
 
-To rename a group or change which lights are in it, open the group under
-**Settings → Devices & services → BLE Christmas Lights** and choose
-**Reconfigure** from its menu (⋮). The group keeps its settings, and lights
-that are added get them.
+- **A group has its own settings.** A new group starts on, at full
+  brightness, cycling through all modes, with one timer from 18:00 to 23:59.
+  The settings are kept when Home Assistant restarts.
+- **Every change on the group goes to all its lights.** Switch the group
+  light off, pick an effect on it or change a timer of the group, and every
+  set of lights in the group gets that command. When one of them is out of
+  reach, the others still get it.
+- **Lights that connect get the settings of the group.** That happens when
+  Home Assistant starts, when lights come back in range or are plugged in
+  again, and when the connection was lost for a moment.
+- **The group does not follow its lights.** It shows its own settings, not
+  what the lights are doing. It is available as long as one of its lights can
+  be reached.
+
+So the group wins: a change you make on one set of lights, in Home Assistant
+or with the phone app, lasts until those lights connect again. With **Stay
+connected** turned off that is at most 5 minutes. Take lights out of the
+group if they should go their own way.
+
+### Making a group
+
+1. Set up the lights themselves first; see [Setup](#setup).
+2. Go to **Settings → Devices & services → Add integration → BLE Christmas
+   Lights** and choose **Make a group of lights**.
+3. Give the group a name and pick one to four sets of lights.
+
+The group gives its lights its settings right away.
+
+### Changing a group
+
+Open the group under **Settings → Devices & services → BLE Christmas
+Lights** and choose **Reconfigure** from its menu (⋮). You can change the
+name and which lights are in the group. The group keeps its settings; lights
+that you add get them, and lights that you take out are left as they are.
+
+To remove a group, choose **Delete** from the same menu. The lights
+themselves stay.
+
+### Sending the settings to the lights
+
+Normally there is nothing to do: changes go to the lights as you make them.
+
+- **To change something**, use the entities of the group: the light, the
+  Timer switch and the timers. In an automation or scene, use the group
+  light like any other light:
+
+  ```yaml
+  action: light.turn_on
+  target:
+    entity_id: light.tree
+  data:
+    brightness_pct: 60
+    effect: fade_away
+  ```
+
+- **To send everything again**, press **Send settings to the lights** on the
+  group, or call it from an automation. Use it when lights were changed with
+  the phone app and should go back to what the group says:
+
+  ```yaml
+  action: button.press
+  target:
+    entity_id: button.tree_send_settings_to_the_lights
+  ```
 
 ## Installation
 
