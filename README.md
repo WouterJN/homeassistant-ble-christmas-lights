@@ -255,8 +255,8 @@ Once a week the tests also run against the newest Home Assistant
 (`scripts/setup --latest`). When that fails, fix what broke and raise the pin
 in `requirements-dev.txt`.
 
-`protocol.py` describes the Bluetooth protocol and has no Home Assistant
-dependencies.
+The Bluetooth protocol is described in [docs/PROTOCOL.md](docs/PROTOCOL.md).
+`protocol.py` implements it and has no Home Assistant dependencies.
 
 ## Credits
 
