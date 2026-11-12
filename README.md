@@ -221,8 +221,8 @@ Wrong in Home Assistant:
 
 - **A command that fails looks like it worked.** Errors while sending are
   only written to the log; the action itself reports no error.
-- **The whole integration reloads after every lost connection.** Until the
-  lights can be reached again, its entities are gone instead of unavailable.
+- **The whole integration reloads after every lost connection**, instead of
+  just reconnecting to the lights.
 - **The lowest brightness shows as 0** while the lights are on.
 - **Adding lights that cannot be reached gives an unexpected error**: the
   setup connects without handling a failure.
