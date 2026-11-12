@@ -8,7 +8,9 @@ from .protocol import ALL_MODES, Mode
 DOMAIN = "ble_christmas_lights"
 
 # Bluetooth names the controllers advertise with, e.g. "LED-4-02-00000000".
-SUPPORTED_NAME = re.compile(r"LED-\d-\d\d-00000000")
+# The first three parts say which kind of lights it is; like the app, the
+# rest of the name is not looked at.
+SUPPORTED_NAME = re.compile(r"(LED-\d-\d\d)(-.*)?")
 
 # Option: keep the Bluetooth connection open (the default), or close it when
 # idle so the phone app or another device can use it.
@@ -28,6 +30,12 @@ RECONNECT_GRACE = 15
 # state, and how long the connection stays open after the last command.
 IDLE_UPDATE_INTERVAL = timedelta(minutes=5)
 IDLE_DISCONNECT_DELAY = 10
+
+# A group has the addresses of its lights and its own settings; see group.py.
+CONF_MEMBERS = "members"
+CONF_SETTINGS = "settings"
+# The app allows this many sets of lights in a group.
+MAX_GROUP_MEMBERS = 4
 
 SERVICE_SET_MODES = "set_modes"
 ATTR_MODES = "modes"

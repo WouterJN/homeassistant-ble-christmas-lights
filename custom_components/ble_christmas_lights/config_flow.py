@@ -18,11 +18,25 @@ from homeassistant.config_entries import (
     ConfigFlowResult,
     OptionsFlowWithReload,
 )
-from homeassistant.const import CONF_ADDRESS
+from homeassistant.const import CONF_ADDRESS, CONF_NAME
 from homeassistant.core import callback
+from homeassistant.helpers.selector import (
+    SelectOptionDict,
+    SelectSelector,
+    SelectSelectorConfig,
+)
+from homeassistant.util import dt as dt_util
 
-from .const import CONF_STAY_CONNECTED, DEFAULT_STAY_CONNECTED, DOMAIN, SUPPORTED_NAME
+from .const import (
+    CONF_MEMBERS,
+    CONF_STAY_CONNECTED,
+    DEFAULT_STAY_CONNECTED,
+    DOMAIN,
+    MAX_GROUP_MEMBERS,
+    SUPPORTED_NAME,
+)
 from .device import BLEAK_EXCEPTIONS, CharacteristicMissingError, ChristmasLights
+from .group import is_group
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,6 +48,18 @@ def _is_supported(service_info: BluetoothServiceInfoBleak) -> bool:
 def _title(address: str) -> str:
     """Return a readable title; every controller advertises the same name."""
     return f"Christmas lights {address.replace(':', '')[-4:].upper()}"
+
+
+def _group_errors(user_input: dict[str, Any] | None) -> dict[str, str]:
+    """Return what is wrong with the lights chosen for a group."""
+    if user_input is None:
+        return {}
+    members = user_input[CONF_MEMBERS]
+    if not members:
+        return {CONF_MEMBERS: "no_members"}
+    if len(members) > MAX_GROUP_MEMBERS:
+        return {CONF_MEMBERS: "too_many_members"}
+    return {}
 
 
 class ChristmasLightsConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -49,6 +75,13 @@ class ChristmasLightsConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ChristmasLightsOptionsFlow:
         """Return the options flow."""
         return ChristmasLightsOptionsFlow()
+
+    @classmethod
+    @callback
+    @override
+    def async_supports_options_flow(cls, config_entry: ConfigEntry) -> bool:
+        """Only a set of lights has options; a group has no connection."""
+        return not is_group(config_entry)
 
     def __init__(self) -> None:
         """Initialize the config flow."""
@@ -96,6 +129,95 @@ class ChristmasLightsConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
+        """Add lights, or a group once there are lights to put in it."""
+        if not self._lights():
+            return await self.async_step_device()
+        return self.async_show_menu(step_id="user", menu_options=["device", "group"])
+
+    def _lights(self) -> dict[str, str]:
+        """Return the title of every set of lights, by address."""
+        return {
+            entry.unique_id: entry.title
+            for entry in self._async_current_entries(include_ignore=False)
+            if not is_group(entry) and entry.unique_id
+        }
+
+    async def async_step_group(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Make a group of lights that are set up already."""
+        errors = _group_errors(user_input)
+        if user_input is not None and not errors:
+            return self.async_create_entry(
+                title=user_input[CONF_NAME],
+                data={CONF_MEMBERS: user_input[CONF_MEMBERS]},
+            )
+        return self._async_show_group_form("group", user_input, errors)
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Change the name of a group and the lights that are in it."""
+        entry = self._get_reconfigure_entry()
+        if not is_group(entry):
+            # Lights have nothing to change here; their options are under
+            # "Configure".
+            return self.async_abort(reason="reconfigure_lights")
+
+        errors = _group_errors(user_input)
+        if user_input is not None and not errors:
+            # The settings of the group stay; after the reload its lights,
+            # also the new ones, are given them.
+            return self.async_update_reload_and_abort(
+                entry,
+                title=user_input[CONF_NAME],
+                data_updates={CONF_MEMBERS: user_input[CONF_MEMBERS]},
+            )
+        return self._async_show_group_form(
+            "reconfigure",
+            user_input
+            or {
+                CONF_NAME: entry.title,
+                # Lights that were removed since can no longer be chosen.
+                CONF_MEMBERS: [
+                    address
+                    for address in entry.data[CONF_MEMBERS]
+                    if address in self._lights()
+                ],
+            },
+            errors,
+        )
+
+    def _async_show_group_form(
+        self, step_id: str, values: dict[str, Any] | None, errors: dict[str, str]
+    ) -> ConfigFlowResult:
+        """Ask for the name of a group and its lights."""
+        return self.async_show_form(
+            step_id=step_id,
+            data_schema=self.add_suggested_values_to_schema(
+                probatio.Schema(
+                    {
+                        probatio.Required(CONF_NAME): str,
+                        probatio.Required(CONF_MEMBERS): SelectSelector(
+                            SelectSelectorConfig(
+                                options=[
+                                    SelectOptionDict(value=address, label=title)
+                                    for address, title in self._lights().items()
+                                ],
+                                multiple=True,
+                            )
+                        ),
+                    }
+                ),
+                values,
+            ),
+            errors=errors,
+            description_placeholders={"max": str(MAX_GROUP_MEMBERS)},
+        )
+
+    async def async_step_device(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """Let the user pick one of the controllers in range."""
         errors: dict[str, str] = {}
 
@@ -122,7 +244,7 @@ class ChristmasLightsConfigFlow(ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="no_devices_found")
 
         return self.async_show_form(
-            step_id="user",
+            step_id="device",
             data_schema=probatio.Schema(
                 {
                     probatio.Required(CONF_ADDRESS): probatio.In(
@@ -141,7 +263,7 @@ class ChristmasLightsConfigFlow(ConfigFlow, domain=DOMAIN):
         ble_device = async_ble_device_from_address(self.hass, address, True)
         if ble_device is None:
             return "cannot_connect"
-        device = ChristmasLights(ble_device)
+        device = ChristmasLights(ble_device, now=dt_util.now)
         try:
             await device.update()
         except CharacteristicMissingError:

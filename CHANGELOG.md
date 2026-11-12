@@ -4,6 +4,47 @@ All notable changes are listed here. Versions follow
 [Semantic Versioning](https://semver.org/): while the version starts
 with `0.`, any release may still contain breaking changes.
 
+## [0.4.0] - 2026-11-12
+
+Compared with the Lights App itself (version 2.2), which showed what the
+bytes of the controller mean.
+
+### Added
+
+- **Timer** switch: whether the timers of the controller decide when the
+  lights are lit.
+- Start and end time of the three timers. The second and third timer are
+  disabled by default.
+- **Restore default settings** button.
+- Groups of up to four sets of lights, as in the app. A group has its own
+  light, Timer switch, timers and Restore default settings button; changes go
+  to all its lights, and lights that connect are given the settings of the
+  group. The name and the lights of a group can be changed afterwards, and
+  a button sends the settings of the group to its lights again.
+- The device page shows which kind of lights it is, such as `LED-4-02`.
+
+### Changed
+
+- Controllers are recognised by the start of their name
+  (`LED-<digit>-<two digits>`), like the app does, instead of only when the
+  name ends in `-00000000`.
+- The integration is listed as polling the lights, which is what it does,
+  instead of as being pushed their state.
+- Notifications from the controller are recognised by their length alone,
+  like the app does.
+- The effect "All modes" is sent as the "Auto Rotate" of the app, instead of
+  as a selection of all seven modes.
+
+### Fixed
+
+- Reading the state set the clock of the controller to 17:38:17 every time,
+  so timers set in the app ran at the wrong moments. The clock is now set to
+  the local time of Home Assistant.
+- Lights that were on with the timers enabled showed as off.
+- Switching the lights on or off from Home Assistant disabled the timers.
+- After choosing "Auto Rotate" in the app, the light could show the effect
+  that was selected before, instead of "All modes".
+
 ## [0.3.0] - 2026-11-11
 
 ### Added

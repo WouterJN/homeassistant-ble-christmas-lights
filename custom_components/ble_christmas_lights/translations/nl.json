@@ -3,23 +3,47 @@
     "flow_title": "{name}",
     "step": {
       "user": {
+        "menu_options": {
+          "device": "Verlichting toevoegen",
+          "group": "Een groep van verlichting maken"
+        }
+      },
+      "device": {
         "description": "Kies de kerstverlichting die je wilt toevoegen.",
         "data": {
           "address": "Apparaat"
         }
       },
+      "group": {
+        "description": "Een groep heeft eigen instellingen. Elke wijziging gaat naar alle verlichting in de groep, en verlichting die verbinding maakt krijgt de instellingen van de groep. Een groep kan uit maximaal {max} sets verlichting bestaan.",
+        "data": {
+          "name": "Naam",
+          "members": "Verlichting"
+        }
+      },
       "bluetooth_confirm": {
         "description": "Wil je {name} toevoegen? Zorg dat de verlichting aan staat en dat de Lights App op je telefoon gesloten is."
+      },
+      "reconfigure": {
+        "description": "Wijzig de naam van de groep en de verlichting die erin zit. De groep houdt zijn instellingen; verlichting die je toevoegt krijgt die ook. Een groep kan uit maximaal {max} sets verlichting bestaan.",
+        "data": {
+          "name": "Naam",
+          "members": "Verlichting"
+        }
       }
     },
     "error": {
       "cannot_connect": "Kan geen verbinding maken. Zorg dat de verlichting binnen bereik is en niet met je telefoon verbonden is.",
-      "unknown": "Onverwachte fout"
+      "unknown": "Onverwachte fout",
+      "no_members": "Kies minstens één set verlichting.",
+      "too_many_members": "Een groep kan uit maximaal 4 sets verlichting bestaan."
     },
     "abort": {
       "already_configured": "Apparaat is al geconfigureerd",
       "no_devices_found": "Geen kerstverlichting in de buurt gevonden",
-      "not_supported": "Dit apparaat wordt niet ondersteund"
+      "not_supported": "Dit apparaat wordt niet ondersteund",
+      "reconfigure_successful": "De groep is gewijzigd",
+      "reconfigure_lights": "Alleen een groep kun je hier wijzigen. De opties van een set verlichting staan onder Configureren."
     }
   },
   "options": {
@@ -64,6 +88,27 @@
           }
         }
       }
+    },
+    "switch": {
+      "timer": {
+        "name": "Timer"
+      }
+    },
+    "time": {
+      "timer_start": {
+        "name": "Timer {number} start"
+      },
+      "timer_end": {
+        "name": "Timer {number} einde"
+      }
+    },
+    "button": {
+      "restore_defaults": {
+        "name": "Standaardinstellingen herstellen"
+      },
+      "sync": {
+        "name": "Instellingen naar de verlichting sturen"
+      }
     }
   },
   "selector": {
@@ -100,6 +145,9 @@
     },
     "unknown_effect": {
       "message": "{effect} is geen effect van de kerstverlichting. Kies een van: {effects}"
+    },
+    "timers_unknown": {
+      "message": "De timers van de kerstverlichting zijn nog niet uitgelezen"
     }
   }
 }

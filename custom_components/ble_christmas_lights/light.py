@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Awaitable
 from typing import Any, override
 
 from homeassistant.components.light import (
@@ -13,14 +12,12 @@ from homeassistant.components.light import (
     LightEntityFeature,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
-from homeassistant.helpers.device_registry import CONNECTION_BLUETOOTH, DeviceInfo
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import ATTR_MODES, DOMAIN, EFFECTS, MODES
-from .coordinator import ChristmasLightsConfigEntry, ChristmasLightsCoordinator
-from .device import BLEAK_EXCEPTIONS
+from .coordinator import ChristmasLightsConfigEntry
+from .entity import ChristmasLightsEntity
 from .protocol import Mode, brightness_from_ha, brightness_to_ha
 
 PARALLEL_UPDATES = 1
@@ -35,37 +32,15 @@ async def async_setup_entry(
     async_add_entities([ChristmasLightsLight(entry.runtime_data)])
 
 
-class ChristmasLightsLight(CoordinatorEntity[ChristmasLightsCoordinator], LightEntity):
+class ChristmasLightsLight(ChristmasLightsEntity, LightEntity):
     """The Christmas lights, with brightness and the light modes as effects."""
 
-    _attr_has_entity_name = True
     _attr_name = None
     _attr_translation_key = "christmas_lights"
     _attr_color_mode = ColorMode.BRIGHTNESS
     _attr_supported_color_modes = {ColorMode.BRIGHTNESS}
     _attr_supported_features = LightEntityFeature.EFFECT
     _attr_effect_list = list(EFFECTS)
-
-    def __init__(self, coordinator: ChristmasLightsCoordinator) -> None:
-        """Initialize the light."""
-        super().__init__(coordinator)
-        address = coordinator.device.address
-        self._attr_unique_id = address
-        self._attr_device_info = DeviceInfo(
-            connections={(CONNECTION_BLUETOOTH, address)},
-            name=coordinator.config_entry.title,
-            model="Lights App controller",
-        )
-
-    @property
-    @override
-    def available(self) -> bool:
-        """Available while the state is known and the lights can be reached."""
-        return (
-            super().available
-            and not self.coordinator.reconnect_overdue
-            and self.coordinator.data.is_on is not None
-        )
 
     @property
     @override
@@ -129,17 +104,3 @@ class ChristmasLightsLight(CoordinatorEntity[ChristmasLightsCoordinator], LightE
         for name in modes:
             mode |= MODES[name]
         await self._async_call(self.coordinator.device.set_mode(mode))
-
-    async def _async_call(self, command: Awaitable[None]) -> None:
-        """Send a command and turn Bluetooth errors into a readable error."""
-        try:
-            await command
-        except BLEAK_EXCEPTIONS as err:
-            # The connection is closed by now. Find out whether the lights
-            # can still be reached, so the state shown is not a stale one.
-            self.coordinator.async_reconnect()
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="communication_error",
-                translation_placeholders={"error": str(err)},
-            ) from err

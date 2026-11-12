@@ -3,23 +3,47 @@
     "flow_title": "{name}",
     "step": {
       "user": {
+        "menu_options": {
+          "device": "Add lights",
+          "group": "Make a group of lights"
+        }
+      },
+      "device": {
         "description": "Choose the Christmas lights to set up.",
         "data": {
           "address": "Device"
         }
       },
+      "group": {
+        "description": "A group has its own settings. Every change is sent to all lights in the group, and lights that connect are given the settings of the group. A group can have up to {max} sets of lights.",
+        "data": {
+          "name": "Name",
+          "members": "Lights"
+        }
+      },
       "bluetooth_confirm": {
         "description": "Do you want to set up {name}? Make sure the lights are switched on and the Lights App on your phone is closed."
+      },
+      "reconfigure": {
+        "description": "Change the name of the group and the lights that are in it. The group keeps its settings; lights that are added get them. A group can have up to {max} sets of lights.",
+        "data": {
+          "name": "Name",
+          "members": "Lights"
+        }
       }
     },
     "error": {
       "cannot_connect": "Could not connect. Make sure the lights are in range and not connected to your phone.",
-      "unknown": "Unexpected error"
+      "unknown": "Unexpected error",
+      "no_members": "Choose at least one set of lights.",
+      "too_many_members": "A group can have at most 4 sets of lights."
     },
     "abort": {
       "already_configured": "Device is already configured",
       "no_devices_found": "No Christmas lights found nearby",
-      "not_supported": "This device is not supported"
+      "not_supported": "This device is not supported",
+      "reconfigure_successful": "The group was changed",
+      "reconfigure_lights": "Only a group can be changed here. The options of a set of lights are under Configure."
     }
   },
   "options": {
@@ -64,6 +88,27 @@
           }
         }
       }
+    },
+    "switch": {
+      "timer": {
+        "name": "Timer"
+      }
+    },
+    "time": {
+      "timer_start": {
+        "name": "Timer {number} start"
+      },
+      "timer_end": {
+        "name": "Timer {number} end"
+      }
+    },
+    "button": {
+      "restore_defaults": {
+        "name": "Restore default settings"
+      },
+      "sync": {
+        "name": "Send settings to the lights"
+      }
     }
   },
   "selector": {
@@ -100,6 +145,9 @@
     },
     "unknown_effect": {
       "message": "{effect} is not an effect of the Christmas lights. Choose one of: {effects}"
+    },
+    "timers_unknown": {
+      "message": "The timers of the Christmas lights have not been read yet"
     }
   }
 }

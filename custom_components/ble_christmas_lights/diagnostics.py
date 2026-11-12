@@ -7,8 +7,9 @@ from typing import Any
 from homeassistant.components import bluetooth
 from homeassistant.core import HomeAssistant
 
-from .const import MODES
+from .const import CONF_MEMBERS, CONF_SETTINGS, MODES
 from .coordinator import ChristmasLightsConfigEntry
+from .group import ChristmasLightsGroupCoordinator
 
 
 async def async_get_config_entry_diagnostics(
@@ -20,6 +21,14 @@ async def async_get_config_entry_diagnostics(
     add support for a controller that behaves differently.
     """
     coordinator = entry.runtime_data
+    if isinstance(coordinator, ChristmasLightsGroupCoordinator):
+        return {
+            "group": {
+                "members": len(entry.data[CONF_MEMBERS]),
+                "members_set_up": len(coordinator.member_coordinators),
+                "settings": entry.data.get(CONF_SETTINGS),
+            }
+        }
     device = coordinator.device
     state = device.state
     service_info = bluetooth.async_last_service_info(
@@ -50,6 +59,9 @@ async def async_get_config_entry_diagnostics(
             "modes": None
             if state.mode is None
             else [name for name, flag in MODES.items() if flag in state.mode],
+            "timers_enabled": state.timers_enabled,
+            "timers": state.timers
+            and [f"{timer.start:%H:%M}-{timer.end:%H:%M}" for timer in state.timers],
         },
         "notifications": {
             "power_report": device.last_power_report,

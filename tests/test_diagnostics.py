@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from homeassistant.const import CONF_ADDRESS
 
-from .conftest import ADDRESS, NAME, make_service_info
+from .conftest import ADDRESS, DEFAULT_TIMERS, NAME, make_service_info
 from .test_light import ble_device, entry, setup  # noqa: F401
 from custom_components.ble_christmas_lights.diagnostics import (
     async_get_config_entry_diagnostics,
@@ -16,6 +16,8 @@ BLUETOOTH = "custom_components.ble_christmas_lights.diagnostics.bluetooth"
 
 async def test_diagnostics(hass, entry, ble_device, controller):  # noqa: F811
     controller.mode = 0x41
+    controller.timers_enabled = True
+    controller.timers = DEFAULT_TIMERS
     await setup(hass, entry)
     controller._notify(None, bytearray.fromhex("0a0b0c"))
 
@@ -31,10 +33,12 @@ async def test_diagnostics(hass, entry, ble_device, controller):  # noqa: F811
         "brightness": 99,
         "mode": "0x41",
         "modes": ["stay_on", "wave"],
+        "timers_enabled": True,
+        "timers": ["18:00-23:59", "00:00-00:00", "00:00-00:00"],
     }
     assert diagnostics["notifications"] == {
-        "power_report": "0000020100",
-        "settings_report": "02000f63" + "00" * 12 + "0341",
+        "power_report": "0000020300",
+        "settings_report": "02000f63" + "1200173b" + "00" * 8 + "0341",
         "unrecognised": ["0a0b0c"],
     }
     # Safe to attach to a public issue.

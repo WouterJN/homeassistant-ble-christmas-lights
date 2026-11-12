@@ -6,11 +6,15 @@ can be unit tested on its own.
 The controller exposes one GATT service with a write and a notify
 characteristic. Commands are written with response; the controller answers
 state queries through notifications.
+
+The commands and the meaning of the bytes follow the Lights App itself
+(com.novolink.lightapp 2.2).
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import time
 from enum import IntFlag
 
 SERVICE_UUID = "0000fff0-0000-1000-8000-00805f9b34fb"
@@ -36,35 +40,85 @@ class Mode(IntFlag):
 
 ALL_MODES = Mode(0x7F)
 
-CMD_TURN_ON = bytes.fromhex("01010101")
-CMD_TURN_OFF = bytes.fromhex("01010100")
-CMD_QUERY_POWER = bytes.fromhex("000003112611")
+# How the controller uses the modes: it either cycles through all of them
+# ("Auto Rotate" in the app), or through the ones that are selected.
+_THEME_AUTO_ROTATE = 0x01
+_THEME_SELECTION = 0x03
+# The mode byte the app has when no selection was ever made.
+_MODE_AUTO_ROTATE = 0x80
+
+TIMER_COUNT = 3
+
 CMD_QUERY_SETTINGS = bytes.fromhex("020000")
+# "Restore Default Settings" in the app: full brightness, cycling through all
+# modes, and one timer from 18:00 to 23:59.
+CMD_RESTORE_DEFAULTS = bytes.fromhex("07010702631200173b01")
 
 _POWER_REPORT_LENGTH = 5
-_POWER_REPORT_MARKER = b"\x00\x00\x02"
 _SETTINGS_REPORT_LENGTH = 18
-_SETTINGS_REPORT_PREFIX = b"\x02\x00"
+
+
+@dataclass(frozen=True, slots=True)
+class Timer:
+    """A period in which the controller keeps the lights on.
+
+    A timer from 00:00 to 00:00 is not set.
+    """
+
+    start: time = time(0, 0)
+    end: time = time(0, 0)
+
+    @property
+    def is_set(self) -> bool:
+        """Whether this timer is in use."""
+        return self != Timer()
+
+
+type Timers = tuple[Timer, Timer, Timer]
 
 
 @dataclass(frozen=True, slots=True)
 class PowerReport:
-    """Reply to CMD_QUERY_POWER."""
+    """Reply to power_query(), and to power_command().
+
+    With the timers enabled, the lights are only lit within a timer period,
+    also when is_on is true.
+    """
 
     is_on: bool
+    timers_enabled: bool
 
 
 @dataclass(frozen=True, slots=True)
 class SettingsReport:
     """Reply to CMD_QUERY_SETTINGS.
 
-    Layout of the 18 bytes: 0-2 unknown (starts with 02 00), 3 brightness,
-    4-15 three timers of start hour/minute and stop hour/minute (all zero when
-    unset), 16 unknown, 17 mode.
+    Layout of the 18 bytes: 0-2 header, 3 brightness, 4-15 three timers of
+    start hour/minute and stop hour/minute (all zero when unset), 16 mode
+    theme, 17 mode.
     """
 
     brightness: int
     mode: Mode
+    timers: Timers
+
+
+def power_query(now: time) -> bytes:
+    """Return the command that asks for the power state.
+
+    It carries the current time, which the controller uses as its clock for
+    the timers. So this has to be the local time, and sending it regularly
+    keeps the clock right.
+    """
+    return bytes((0x00, 0x00, 0x03, now.hour, now.minute, now.second))
+
+
+def power_command(is_on: bool, timers_enabled: bool = False) -> bytes:
+    """Return the command that switches the lights and the timers on or off.
+
+    Both are set at once, so pass the current state of the one to keep.
+    """
+    return bytes((0x01, 0x01, 0x01, int(is_on) | int(timers_enabled) << 1))
 
 
 def brightness_command(level: int) -> bytes:
@@ -77,24 +131,95 @@ def brightness_command(level: int) -> bytes:
 
 
 def mode_command(mode: Mode) -> bytes:
-    """Return the command that selects one or more modes."""
+    """Return the command that selects one or more modes.
+
+    All modes together is "Auto Rotate" in the app, which has its own theme.
+    """
+    return bytes((0x05, 0x01, 0x02, *_theme_and_mode(mode)))
+
+
+def _theme_and_mode(mode: Mode) -> tuple[int, int]:
+    """Return the mode theme and mode byte for one or more modes."""
     mode &= ALL_MODES
     if not mode:
         raise ValueError("At least one mode must be selected")
-    return bytes((0x05, 0x01, 0x02, 0x03, int(mode)))
+    if mode == ALL_MODES:
+        return _THEME_AUTO_ROTATE, _MODE_AUTO_ROTATE
+    return _THEME_SELECTION, int(mode)
+
+
+def timers_command(timers: Timers) -> bytes:
+    """Return the command that sets all three timers."""
+    return bytes((0x04, 0x01, 0x0C)) + _timer_bytes(timers)
+
+
+def settings_command(brightness: int, mode: Mode, timers: Timers) -> bytes:
+    """Return the command that sets the brightness, modes and timers at once.
+
+    The app sends this to every set of lights in a group when it connects.
+    """
+    if not BRIGHTNESS_MIN <= brightness <= BRIGHTNESS_MAX:
+        raise ValueError(
+            f"Brightness must be between {BRIGHTNESS_MIN} and {BRIGHTNESS_MAX}"
+        )
+    return (
+        bytes((0x08, 0x01, 0x0F, brightness))
+        + _timer_bytes(timers)
+        + bytes(_theme_and_mode(mode))
+    )
+
+
+def _timer_bytes(timers: Timers) -> bytes:
+    """Return the twelve bytes of the three timers."""
+    if len(timers) != TIMER_COUNT:
+        raise ValueError(f"There must be {TIMER_COUNT} timers")
+    return bytes(
+        value
+        for timer in timers
+        for value in (
+            timer.start.hour,
+            timer.start.minute,
+            timer.end.hour,
+            timer.end.minute,
+        )
+    )
 
 
 def parse_notification(data: bytes) -> PowerReport | SettingsReport | None:
-    """Decode a notification, or return None when it is not recognised."""
-    if len(data) == _POWER_REPORT_LENGTH and _POWER_REPORT_MARKER in data:
-        return PowerReport(is_on=data[3] == 0x01)
-    if len(data) == _SETTINGS_REPORT_LENGTH and data.startswith(
-        _SETTINGS_REPORT_PREFIX
-    ):
-        # The controller reports "no modes" when it is cycling through all of them.
-        mode = Mode(data[-1] & ALL_MODES) or ALL_MODES
-        return SettingsReport(brightness=data[3], mode=mode)
+    """Decode a notification, or return None when it is not recognised.
+
+    Like the app, this goes by the length of the notification alone.
+    """
+    if len(data) == _POWER_REPORT_LENGTH:
+        # 0: off, 1: on, 2: off with timers, anything else: on with timers.
+        state = data[3]
+        return PowerReport(is_on=state not in (0, 2), timers_enabled=state > 1)
+    if len(data) == _SETTINGS_REPORT_LENGTH:
+        if data[16] == _THEME_AUTO_ROTATE:
+            # The mode byte is left over from an earlier selection.
+            mode = ALL_MODES
+        else:
+            # Without any mode selected the controller cycles through them all.
+            mode = Mode(data[17] & ALL_MODES) or ALL_MODES
+        return SettingsReport(
+            brightness=data[3],
+            mode=mode,
+            timers=(_timer(data, 4), _timer(data, 8), _timer(data, 12)),
+        )
     return None
+
+
+def _timer(data: bytes, offset: int) -> Timer:
+    """Return the timer that starts at offset in a settings report."""
+    return Timer(
+        _time(data[offset], data[offset + 1]),
+        _time(data[offset + 2], data[offset + 3]),
+    )
+
+
+def _time(hour: int, minute: int) -> time:
+    """Return a time of day, also for bytes that are out of range."""
+    return time(min(hour, 23), min(minute, 59))
 
 
 # Home Assistant brightness runs from 1 to 255; 0 would mean "off".

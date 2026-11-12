@@ -88,15 +88,16 @@ def state_changes(hass):
     changes = []
 
     def listen():
-        hass.bus.async_listen(
-            "state_changed",
-            lambda event: changes.append(
-                (
-                    event.data["new_state"].state,
-                    event.data["new_state"].attributes.get(ATTR_BRIGHTNESS),
+        def changed(event):
+            if event.data["entity_id"] == ENTITY_ID:
+                changes.append(
+                    (
+                        event.data["new_state"].state,
+                        event.data["new_state"].attributes.get(ATTR_BRIGHTNESS),
+                    )
                 )
-            ),
-        )
+
+        hass.bus.async_listen("state_changed", changed)
         return changes
 
     return listen
@@ -211,7 +212,7 @@ async def test_all_modes_effect(hass, entry, ble_device, controller):
     assert state.attributes[ATTR_EFFECT] == "all_modes"
     assert len(state.attributes["modes"]) == 7
     await call(hass, "turn_on", effect="all_modes")
-    assert controller.written[-2].hex() == "050102037f"
+    assert controller.written[-2].hex() == "0501020180"
 
 
 async def test_set_modes_service(hass, entry, ble_device, controller):

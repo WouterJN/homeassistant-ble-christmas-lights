@@ -12,6 +12,7 @@ from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv, service
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.util import dt as dt_util
 
 from .const import ATTR_MODES, DOMAIN, IDLE_DISCONNECT_DELAY, MODES, SERVICE_SET_MODES
 from .coordinator import (
@@ -20,8 +21,14 @@ from .coordinator import (
     stay_connected,
 )
 from .device import ChristmasLights
+from .group import ChristmasLightsGroupCoordinator, async_groups_of, is_group
 
-PLATFORMS: list[Platform] = [Platform.LIGHT]
+PLATFORMS: list[Platform] = [
+    Platform.BUTTON,
+    Platform.LIGHT,
+    Platform.SWITCH,
+    Platform.TIME,
+]
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -46,7 +53,17 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 async def async_setup_entry(
     hass: HomeAssistant, entry: ChristmasLightsConfigEntry
 ) -> bool:
-    """Set up the lights from a config entry."""
+    """Set up a set of lights, or a group of them, from a config entry."""
+    group: ChristmasLightsGroupCoordinator
+    if is_group(entry):
+        group = ChristmasLightsGroupCoordinator(hass, entry)
+        entry.runtime_data = group
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+        # Lights that were set up before their group.
+        for member in group.member_coordinators:
+            group.async_member_connected(member.device)
+        return True
+
     address: str = entry.data[CONF_ADDRESS]
     ble_device = bluetooth.async_ble_device_from_address(hass, address, True)
     if not ble_device:
@@ -59,8 +76,25 @@ async def async_setup_entry(
     device = ChristmasLights(
         ble_device,
         idle_disconnect_delay=None if stay_connected(entry) else IDLE_DISCONNECT_DELAY,
+        # The controller runs its timers on the time it is given here.
+        now=dt_util.now,
     )
     coordinator = ChristmasLightsCoordinator(hass, entry, device)
+
+    @callback
+    def _async_connected() -> None:
+        """Give the lights the settings of the groups they are in."""
+        for group in async_groups_of(hass, address):
+            group.async_member_connected(device)
+
+    @callback
+    def _async_changed() -> None:
+        """Let the groups know these lights came, went or changed."""
+        for group in async_groups_of(hass, address):
+            group.async_member_changed()
+
+    entry.async_on_unload(device.register_connect_callback(_async_connected))
+    entry.async_on_unload(coordinator.async_add_listener(_async_changed))
 
     @callback
     def _async_update_ble(
@@ -96,6 +130,9 @@ async def async_setup_entry(
     )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    # A group that was set up before its lights now has lights to control.
+    _async_changed()
+    entry.async_on_unload(_async_changed)
     return True
 
 
