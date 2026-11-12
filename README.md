@@ -315,13 +315,6 @@ in `requirements-dev.txt`.
 The Bluetooth protocol is described in [docs/PROTOCOL.md](docs/PROTOCOL.md).
 `protocol.py` implements it and has no Home Assistant dependencies.
 
-## Credits
-
-The Bluetooth protocol was first worked out by
-[Juraj Nyíri](https://github.com/JurajNyiri) and contributors in
-[HomeAssistant-Lights-App](https://github.com/JurajNyiri/HomeAssistant-Lights-App).
-This project is a new implementation, written from scratch, with the meaning
-of the commands taken from the Lights App itself.
 
 ## License
 
