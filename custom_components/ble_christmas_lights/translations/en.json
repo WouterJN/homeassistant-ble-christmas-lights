@@ -23,6 +23,13 @@
       },
       "bluetooth_confirm": {
         "description": "Do you want to set up {name}? Make sure the lights are switched on and the Lights App on your phone is closed."
+      },
+      "reconfigure": {
+        "description": "Change the name of the group and the lights that are in it. The group keeps its settings; lights that are added get them. A group can have up to {max} sets of lights.",
+        "data": {
+          "name": "Name",
+          "members": "Lights"
+        }
       }
     },
     "error": {
@@ -34,7 +41,9 @@
     "abort": {
       "already_configured": "Device is already configured",
       "no_devices_found": "No Christmas lights found nearby",
-      "not_supported": "This device is not supported"
+      "not_supported": "This device is not supported",
+      "reconfigure_successful": "The group was changed",
+      "reconfigure_lights": "Only a group can be changed here. The options of a set of lights are under Configure."
     }
   },
   "options": {

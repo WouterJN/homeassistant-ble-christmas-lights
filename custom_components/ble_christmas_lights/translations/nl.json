@@ -23,6 +23,13 @@
       },
       "bluetooth_confirm": {
         "description": "Wil je {name} toevoegen? Zorg dat de verlichting aan staat en dat de Lights App op je telefoon gesloten is."
+      },
+      "reconfigure": {
+        "description": "Wijzig de naam van de groep en de verlichting die erin zit. De groep houdt zijn instellingen; verlichting die je toevoegt krijgt die ook. Een groep kan uit maximaal {max} sets verlichting bestaan.",
+        "data": {
+          "name": "Naam",
+          "members": "Verlichting"
+        }
       }
     },
     "error": {
@@ -34,7 +41,9 @@
     "abort": {
       "already_configured": "Apparaat is al geconfigureerd",
       "no_devices_found": "Geen kerstverlichting in de buurt gevonden",
-      "not_supported": "Dit apparaat wordt niet ondersteund"
+      "not_supported": "Dit apparaat wordt niet ondersteund",
+      "reconfigure_successful": "De groep is gewijzigd",
+      "reconfigure_lights": "Alleen een groep kun je hier wijzigen. De opties van een set verlichting staan onder Configureren."
     }
   },
   "options": {

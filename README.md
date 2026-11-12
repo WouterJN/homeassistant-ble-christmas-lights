@@ -111,7 +111,10 @@ the app:
 - The group does not follow its lights: it shows its own settings, and it is
   available as long as one of its lights can be reached.
 
-To change which lights are in a group, delete the group and make it again.
+To rename a group or change which lights are in it, open the group under
+**Settings → Devices & services → BLE Christmas Lights** and choose
+**Reconfigure** from its menu (⋮). The group keeps its settings, and lights
+that are added get them.
 
 ## Installation
 

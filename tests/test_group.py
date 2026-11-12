@@ -386,3 +386,51 @@ async def test_only_lights_have_options(hass, group):
     lights = hass.config_entries.async_entry_for_domain_unique_id(DOMAIN, ADDRESS)
     assert lights.supports_options is True
     assert group.supports_options is False
+
+
+async def test_change_the_lights_of_a_group(
+    hass, group, controller, second, controllers
+):
+    third_address = "11:22:33:44:55:77"
+    third = controllers.setdefault(third_address, FakeController())
+    await hass.config_entries.async_setup(add_lights(hass, third_address).entry_id)
+    await call(hass, "light", "turn_on", LIGHT, effect="wave")
+    await settle(hass)
+
+    result = await group.start_reconfigure_flow(hass)
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "reconfigure"
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_NAME: "Garden", CONF_MEMBERS: []}
+    )
+    assert result["errors"] == {CONF_MEMBERS: "no_members"}
+
+    second.written.clear()
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {CONF_NAME: "Garden", CONF_MEMBERS: [ADDRESS, third_address]},
+    )
+    await settle(hass)
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reconfigure_successful"
+    assert group.title == "Garden"
+    assert group.data[CONF_MEMBERS] == [ADDRESS, third_address]
+    # The group kept its settings, and the lights that joined got them.
+    assert group.data[CONF_SETTINGS]["mode"] == 0x01
+    assert written(third)[-2:] == [
+        "08010f63" + "1200173b" + "00" * 8 + "0301",
+        "01010101",
+    ]
+    # The lights that left are left alone from here on.
+    assert second.written == []
+    await call(hass, "light", "turn_off", LIGHT)
+    assert written(third)[-1] == "01010100"
+    assert second.written == []
+
+
+async def test_lights_cannot_be_reconfigured(hass, group):
+    lights = hass.config_entries.async_entry_for_domain_unique_id(DOMAIN, ADDRESS)
+    result = await lights.start_reconfigure_flow(hass)
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reconfigure_lights"

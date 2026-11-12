@@ -50,6 +50,18 @@ def _title(address: str) -> str:
     return f"Christmas lights {address.replace(':', '')[-4:].upper()}"
 
 
+def _group_errors(user_input: dict[str, Any] | None) -> dict[str, str]:
+    """Return what is wrong with the lights chosen for a group."""
+    if user_input is None:
+        return {}
+    members = user_input[CONF_MEMBERS]
+    if not members:
+        return {CONF_MEMBERS: "no_members"}
+    if len(members) > MAX_GROUP_MEMBERS:
+        return {CONF_MEMBERS: "too_many_members"}
+    return {}
+
+
 class ChristmasLightsConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for BLE Christmas Lights."""
 
@@ -134,21 +146,46 @@ class ChristmasLightsConfigFlow(ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Make a group of lights that are set up already."""
-        errors: dict[str, str] = {}
+        errors = _group_errors(user_input)
+        if user_input is not None and not errors:
+            return self.async_create_entry(
+                title=user_input[CONF_NAME],
+                data={CONF_MEMBERS: user_input[CONF_MEMBERS]},
+            )
+        return self._async_show_group_form("group", user_input, errors)
 
-        if user_input is not None:
-            members = user_input[CONF_MEMBERS]
-            if not members:
-                errors[CONF_MEMBERS] = "no_members"
-            elif len(members) > MAX_GROUP_MEMBERS:
-                errors[CONF_MEMBERS] = "too_many_members"
-            else:
-                return self.async_create_entry(
-                    title=user_input[CONF_NAME], data={CONF_MEMBERS: members}
-                )
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Change the name of a group and the lights that are in it."""
+        entry = self._get_reconfigure_entry()
+        if not is_group(entry):
+            # Lights have nothing to change here; their options are under
+            # "Configure".
+            return self.async_abort(reason="reconfigure_lights")
 
+        errors = _group_errors(user_input)
+        if user_input is not None and not errors:
+            # The settings of the group stay; after the reload its lights,
+            # also the new ones, are given them.
+            return self.async_update_reload_and_abort(
+                entry,
+                title=user_input[CONF_NAME],
+                data_updates={CONF_MEMBERS: user_input[CONF_MEMBERS]},
+            )
+        return self._async_show_group_form(
+            "reconfigure",
+            user_input
+            or {CONF_NAME: entry.title, CONF_MEMBERS: entry.data[CONF_MEMBERS]},
+            errors,
+        )
+
+    def _async_show_group_form(
+        self, step_id: str, values: dict[str, Any] | None, errors: dict[str, str]
+    ) -> ConfigFlowResult:
+        """Ask for the name of a group and its lights."""
         return self.async_show_form(
-            step_id="group",
+            step_id=step_id,
             data_schema=self.add_suggested_values_to_schema(
                 probatio.Schema(
                     {
@@ -164,7 +201,7 @@ class ChristmasLightsConfigFlow(ConfigFlow, domain=DOMAIN):
                         ),
                     }
                 ),
-                user_input,
+                values,
             ),
             errors=errors,
             description_placeholders={"max": str(MAX_GROUP_MEMBERS)},
