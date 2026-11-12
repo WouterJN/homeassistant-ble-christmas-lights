@@ -4,7 +4,7 @@ All notable changes are listed here. Versions follow
 [Semantic Versioning](https://semver.org/): while the version starts
 with `0.`, any release may still contain breaking changes.
 
-## [Unreleased]
+## [0.4.0] - 2026-11-12
 
 Compared with the Lights App itself (version 2.2), which showed what the
 bytes of the controller mean.
