@@ -315,7 +315,6 @@ in `requirements-dev.txt`.
 The Bluetooth protocol is described in [docs/PROTOCOL.md](docs/PROTOCOL.md).
 `protocol.py` implements it and has no Home Assistant dependencies.
 
-
 ## License
 
 [MIT](LICENSE)

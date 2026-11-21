@@ -4,6 +4,11 @@ All notable changes are listed here. Versions follow
 [Semantic Versioning](https://semver.org/): while the version starts
 with `0.`, any release may still contain breaking changes.
 
+## [0.4.2] - 2026-11-21
+
+- No changes to the integration. This release is the one submitted to the
+  HACS default list, so it can be found by searching in HACS.
+
 ## [0.4.1] - 2026-11-12
 
 - German and French translations.
