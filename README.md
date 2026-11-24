@@ -175,17 +175,40 @@ Normally there is nothing to do: changes go to the lights as you make them.
 
 ## Installation
 
-### HACS (recommended)
+[![Open BLE Christmas Lights in the Marketplace of your Home Assistant.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=WouterJN&repository=homeassistant-ble-christmas-lights&category=integration)
 
-1. In HACS, open the menu (⋮) → **Custom repositories**.
-2. Add `https://github.com/WouterJN/homeassistant-ble-christmas-lights` with
-   type **Integration**.
-3. Search for **BLE Christmas Lights**, install it and restart Home Assistant.
+### Marketplace (recommended)
 
-### Manual
+From Home Assistant 2026.11, BLE Christmas Lights is in the Marketplace:
 
-Copy `custom_components/ble_christmas_lights` to the `custom_components`
-folder in your Home Assistant configuration folder and restart Home Assistant.
+1. Go to **Settings** > **Marketplace**.
+2. Search for **BLE Christmas Lights** and open it.
+3. Select **Install**, and **Install** again in the dialog.
+
+If Home Assistant asks for a restart, restart it. Then continue with
+[Setup](#setup).
+
+The button above opens BLE Christmas Lights in the Marketplace of your own
+Home Assistant directly.
+
+### HACS (Home Assistant before 2026.11)
+
+In HACS, search for **BLE Christmas Lights**, install it and restart Home
+Assistant. When you update to Home Assistant 2026.11 or later, the
+Marketplace takes over the installation by itself, and you keep receiving
+updates.
+
+### Other ways
+
+- **Add from link**: if the Marketplace does not list BLE Christmas Lights,
+  for example to try it before it shows up there, go to **Settings** >
+  **Marketplace**, select **Add from link** and enter
+  `https://github.com/WouterJN/homeassistant-ble-christmas-lights`. The
+  Marketplace asks you to connect GitHub for this. In HACS this is
+  **Custom repositories** in the menu (⋮), with type **Integration**.
+- **Manual**: copy `custom_components/ble_christmas_lights` to the
+  `custom_components` folder in your Home Assistant configuration folder and
+  restart Home Assistant. You then have to install updates yourself.
 
 ## Setup
 
@@ -288,10 +311,10 @@ Wrong in Home Assistant:
 
 ### Moving over
 
-The two are not compatible: remove the old integration (and its HACS
-repository), install this one and set up your lights again. The seven mode
-switches are now effects of the light, so update automations and scenes that
-used them.
+The two are not compatible: remove the old integration and uninstall it in
+the Marketplace or HACS, install this one and set up your lights again. The
+seven mode switches are now effects of the light, so update automations and
+scenes that used them.
 
 ## Development
 

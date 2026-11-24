@@ -4,6 +4,12 @@ All notable changes are listed here. Versions follow
 [Semantic Versioning](https://semver.org/): while the version starts
 with `0.`, any release may still contain breaking changes.
 
+## [Unreleased]
+
+- The README explains how to install from the Marketplace, which replaces
+  HACS from Home Assistant 2026.11. HACS and adding the repository yourself
+  are described as the alternatives.
+
 ## [0.4.2] - 2026-11-21
 
 - No changes to the integration. This release is the one submitted to the
